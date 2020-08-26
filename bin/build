@@ -15,11 +15,6 @@ build_SHA=$BUILD_SHA
 echo "build and push docker images"
 echo "SHA is ${build_SHA}"
 
-if [[ -n build_SHA ]]; then
-  echo "Build sha environment variable should be set"
-  exit 1
-fi
-
 echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
 kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=https://api.${k8s_cluster_name}
 kubectl config set-credentials ${service_account} --token=${k8s_token}
