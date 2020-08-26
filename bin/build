@@ -3,13 +3,11 @@ set -e -u -o pipefail
 
 k8s_cluster_cert=$K8S_CLUSTER_CERT
 k8s_cluster_name=$K8S_CLUSTER_NAME
-k8s_token=$K8S_TOKEN
-k8s_namespace=$K8S_NAMESPACE
+k8s_token=$(echo $K8S_TOKEN | base64 -d)
+k8s_namespace=formbuilder-repos
 service_account=$SERVICE_ACCOUNT
 
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
-ecr_username=$ECR_USERNAME
-ecr_password=$ECR_PASSWORD
 
 environment_name=$ENVIRONMENT_NAME
 build_SHA=$BUILD_SHA
@@ -29,16 +27,16 @@ kubectl config set-context ${k8s_cluster_name} --cluster=${k8s_cluster_name} --u
 kubectl config use-context ${k8s_cluster_name}
 
 export AWS_DEFAULT_REGION=eu-west-2
-export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n ${k8s_namespace} ${ecr_credentials_secret} -o json | jq -r '.data["access_key"]' | base64 -d)
-export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n ${k8s_namespace} ${ecr_credentials_secret} -o json | jq -r '.data["secret_access_key"]' | base64 -d)
-export ECR_REPO_URL=$(kubectl get secrets -n ${k8s_namespace} ${ecr_credentials_secret} -o json | jq -r '.data["repo_url"]' | base64 -d)
+export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o json | jq -r '.data["access_key"]' | base64 -d)
+export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o json | jq -r '.data["secret_access_key"]' | base64 -d)
+export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o json | jq -r '.data["repo_url"]' | base64 -d)
 
 echo  'Building docker image...'
 out=$(docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .)
 echo $out
 
 echo 'Logging into AWS ECR...'
-out=$(aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password})
+out=$(aws ecr get-login --region eu-west-2 --no-include-email)
 echo $out
 
 echo 'Pushing latest docker image...'
@@ -46,5 +44,5 @@ out=$(docker push ${ECR_REPO_URL}:latest-${environment_name})
 echo $out
 
 echo 'Pushing current build SHA docker image...'
-out=$(ocker push ${ECR_REPO_URL}:${build_SHA})
+out=$(docker push ${ECR_REPO_URL}:${build_SHA})
 echo $out
