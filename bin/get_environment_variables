@@ -1,0 +1,35 @@
+#!/usr/bin/env sh
+set -e -u -o pipefail
+
+namespace=$1
+service_name=$2
+app_name=$3
+
+secret_name=$(kubectl get ServiceAccount -n ${namespace} ${service_name} -o json | jq -r '.secrets[0]["name"]')
+
+cert=$(kubectl get secrets -n ${namespace} ${secret_name} -o json |  jq -r '.data["ca.crt"]')
+k8s_namespace=$(kubectl get secrets -n ${namespace} ${secret_name} -o json |  jq -r '.data["namespace"]' | base64 -D)
+token=$(kubectl get secrets -n ${namespace} ${secret_name} -o json |  jq -r '.data["token"]')
+
+echo "K8S_CLUSTER_NAME=live-1.cloud-platform.service.justice.gov.uk"
+echo
+echo "SERVICE_ACCOUNT=circleci"
+echo
+echo "Set these environment variables in your CI"
+echo
+echo "K8S_CLUSTER_CERT=${cert}"
+echo
+echo "K8S_NAMESPACE=${k8s_namespace}"
+echo
+echo "K8S_TOKEN=${token}"
+echo
+
+ecr_credentials_secret="ecr-repo-${app_name}"
+ecr_repos=$(kubectl get secrets -n formbuilder-repos)
+
+if [[ ${ecr_repos[@]} =~ ${ecr_credentials_secret} ]]; then
+  echo "ECR_CREDENTIALS_SECRET=${ecr_credentials_secret}"
+else
+  echo "${ecr_credentials_secret} does not exist in repo list:"
+  echo $(kubectl get secrets -n formbuilder-repos -o json | jq '.items[] | .metadata["name"]')
+fi
