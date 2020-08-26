@@ -28,17 +28,13 @@ export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_cr
 export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.repo_url}' | base64 -d)
 
 echo  'Building docker image...'
-out=$(docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .)
-echo $out
+docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .
 
 echo 'Logging into AWS ECR...'
-out=$(aws ecr get-login --region eu-west-2 --no-include-email)
-echo $out
+aws ecr get-login --region eu-west-2 --no-include-email
 
 echo 'Pushing latest docker image...'
-out=$(docker push ${ECR_REPO_URL}:latest-${environment_name})
-echo $out
+docker push ${ECR_REPO_URL}:latest-${environment_name}
 
 echo 'Pushing current build SHA docker image...'
-out=$(docker push ${ECR_REPO_URL}:${build_SHA})
-echo $out
+docker push ${ECR_REPO_URL}:${build_SHA}
