@@ -10,7 +10,7 @@ service_account=$SERVICE_ACCOUNT
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
 
 environment_name=$ENVIRONMENT_NAME
-build_SHA=$BUILD_SHA
+build_SHA=$CIRCLE_SHA
 
 echo "build and push docker images"
 echo "SHA is ${build_SHA}"
