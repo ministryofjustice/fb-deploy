@@ -7,6 +7,8 @@ k8s_token=$(echo $K8S_TOKEN | base64 -d)
 k8s_namespace=formbuilder-repos
 service_account=$SERVICE_ACCOUNT
 
+ecr_username=$ECR_USERNAME
+ecr_password=$ECR_PASSWORD
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
 
 environment_name=$ENVIRONMENT_NAME
@@ -31,7 +33,7 @@ echo  'Building docker image...'
 docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .
 
 echo 'Logging into AWS ECR...'
-aws ecr get-login-password --region eu-west-2 | docker login --username ${ECR_USERNAME} --password-stdin ${ECR_PASSWORD}
+aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
 
 echo 'Pushing latest docker image...'
 docker push ${ECR_REPO_URL}:latest-${environment_name}
