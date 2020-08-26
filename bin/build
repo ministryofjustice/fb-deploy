@@ -22,9 +22,9 @@ kubectl config set-context ${k8s_cluster_name} --cluster=${k8s_cluster_name} --u
 kubectl config use-context ${k8s_cluster_name}
 
 export AWS_DEFAULT_REGION=eu-west-2
-export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o json | jq -r '.data["access_key"]' | base64 -d)
-export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o json | jq -r '.data["secret_access_key"]' | base64 -d)
-export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o json | jq -r '.data["repo_url"]' | base64 -d)
+export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.access_key_id}' | base64 -d)
+export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret}  -o jsonpath='{.data.secret_access_key}' | base64 -d)
+export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.repo_url}' | base64 -d)
 
 echo  'Building docker image...'
 out=$(docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .)
