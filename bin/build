@@ -18,8 +18,8 @@ echo "SHA is ${build_SHA}"
 echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
 kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=https://api.${k8s_cluster_name}
 kubectl config set-credentials ${service_account} --token=${k8s_token}
-kubectl config set-context ${k8s_cluster_name} --cluster=${k8s_cluster_name} --user=${service_account} --namespace=${k8s_namespace}
-kubectl config use-context ${k8s_cluster_name}
+kubectl config set-context ${service_account} --cluster=${k8s_cluster_name} --user=${service_account} --namespace=${k8s_namespace}
+kubectl config use-context ${service_account}
 
 export AWS_DEFAULT_REGION=eu-west-2
 export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.access_key_id}' | base64 -d)
