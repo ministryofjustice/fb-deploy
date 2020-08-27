@@ -9,7 +9,7 @@ platform_environment=$PLATFORM_ENV
 #
 deployment_environment=$DEPLOYMENT_ENV
 
-environment_full_name="${platform_environment}_${deployment_environment}"
+environment_full_name="${platform_environment}-${deployment_environment}"
 
 ## Concatenate K8S_TOKEN_TEST_DEV for example
 ##
@@ -46,8 +46,10 @@ echo "apply kubernetes changes to ${platform_environment} ${deployment_environme
 ## Normal deployment via git crypt
 ##
 GIT_SSH_COMMAND="ssh -v -i ${ssh_file_for_secrets} -o \"IdentitiesOnly=yes\"" git clone git@github.com:ministryofjustice/${application_name}-deploy.git app-secrets
-echo ${encoded_git_crypt_key} | base64 -d > git_crypt.key
-cd app-secrets && git-crypt unlock git_crypt.key
+echo ${encoded_git_crypt_key} | base64 -d > app-secrets/git_crypt.key
+cd app-secrets && git-crypt unlock git_crypt.key && cd ..
+
+pwd
 
 chartname="${application_name}-chart"
 config_file="/tmp/${application_name}-${environment_full_name}.yaml"
@@ -55,13 +57,25 @@ config_file="/tmp/${application_name}-${environment_full_name}.yaml"
 helm_command=''
 
 values_config="app-secrets/values/${environment_full_name}-values.yaml"
-[ -f "$values_config" ] && helm_command="${helm_command} -f $values_config"
+if [[ -f "$values_config" ]]; then
+  helm_command="${helm_command} -f $values_config"
+else
+  echo "${values_config} not found. Skipping"
+fi
 
 shared_config="app-secrets/secrets/shared-secrets-values.yaml"
-[ -f "$shared_config" ] && helm_command="${helm_command} -f $shared_config"
+if [[ -f "$shared_config" ]]; then
+  helm_command="${helm_command} -f $shared_config"
+else
+  echo "${shared_config} not found. Skipping"
+fi
 
 secrets_config="app-secrets/secrets/${environment_full_name}-secrets-values.yaml"
-[ -f "$secrets_config" ] && helm_command="${helm_command} -f $secrets_config"
+if [[ -f "$secrets_config" ]]; then
+  helm_command="${helm_command} -f $secrets_config"
+else
+  echo "${secrets_config} not found. Skipping"
+fi
 
 helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} --set environmentName=${environment_full_name} --set platformEnv=${platform_environment}"
 
