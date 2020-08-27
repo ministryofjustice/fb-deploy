@@ -14,11 +14,11 @@ done
 cert=$(kubectl get secrets -n formbuilder-repos ${circle_secret_name} -o json |  jq -r '.data["ca.crt"]')
 token=$(kubectl get secrets -n formbuilder-repos ${circle_secret_name} -o json |  jq -r '.data["token"]')
 
+echo "Set these environment variables in your CI"
+echo
 echo "K8S_CLUSTER_NAME=live-1.cloud-platform.service.justice.gov.uk"
 echo
 echo "SERVICE_ACCOUNT=circleci"
-echo
-echo "Set these environment variables in your CI"
 echo
 echo "K8S_CLUSTER_CERT=${cert}"
 echo
@@ -33,3 +33,25 @@ else
   echo "${ecr_credentials_secret} does not exist in repo list:"
   echo $(kubectl get secrets -n formbuilder-repos -o json | jq '.items[] | .metadata["name"]')
 fi
+
+echo
+echo "==========================================="
+echo "| K8S_TOKEN for all platform environments |"
+echo "==========================================="
+echo
+
+namespaces=('test-dev' 'test-production' 'live-dev' 'live-production')
+
+for namespace in ${namespaces[@]}; do
+  secrets=$(kubectl get secrets -n formbuilder-platform-${namespace})
+
+  for secret in ${secrets[@]}; do
+    if [[ $secret == *"circleci-formbuilder-platform-${namespace}"* ]]; then
+      k8s_namespace_token=$(kubectl get secrets -n formbuilder-platform-${namespace} ${secret} -o jsonpath="{.data.token}")
+      formatted_namespace=$(echo ${namespace} | tr '-' '_' | tr [a-z] [A-Z])
+      echo
+      echo "K8S_TOKEN_${formatted_namespace}=${k8s_namespace_token}"
+    fi
+  done
+done
+echo
