@@ -7,8 +7,6 @@ k8s_token=$(echo $K8S_TOKEN | base64 -d)
 k8s_namespace=formbuilder-repos
 service_account=$SERVICE_ACCOUNT
 
-ecr_username=$ECR_USERNAME
-ecr_password=$ECR_PASSWORD
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
 
 environment_name=$ENVIRONMENT_NAME
@@ -28,6 +26,10 @@ export AWS_DEFAULT_REGION=eu-west-2
 export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.access_key_id}' | base64 -d)
 export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret}  -o jsonpath='{.data.secret_access_key}' | base64 -d)
 export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.repo_url}' | base64 -d)
+
+echo "Getting ECR credentials"
+ecr_username=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_username}" | base64 -d)
+ecr_password=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_password}" | base64 -d)
 
 echo  'Building docker image...'
 docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .
