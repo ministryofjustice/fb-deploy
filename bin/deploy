@@ -1,0 +1,91 @@
+#!/usr/bin/env sh
+set -e -u -o pipefail
+
+## Platform environment: test or live
+#
+platform_environment=$PLATFORM_ENV
+
+## Deployment environment: dev (draft), production (published)
+#
+deployment_environment=$DEPLOYMENT_ENV
+
+environment_full_name="${platform_environment}-${deployment_environment}"
+
+## Concatenate K8S_TOKEN_TEST_DEV for example
+##
+k8s_environment_name=$(echo ${platform_environment}_${deployment_environment} | tr [a-z] [A-Z]})
+k8s_token_env_var_name="K8S_TOKEN_${k8s_environment_name}"
+k8s_token=$(eval "echo \${$k8s_token_env_var_name}" | base64 -d)
+
+build_SHA=$BUILD_SHA
+k8s_cluster_cert=$K8S_CLUSTER_CERT
+k8s_cluster_name=$K8S_CLUSTER_NAME
+service_account=$SERVICE_ACCOUNT
+application_name=$APPLICATION_NAME
+namespace=$K8S_NAMESPACE
+
+ssh_file_for_secrets=$SSH_FILE_FOR_SECRETS
+encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
+
+credential_name="${service_account}_${platform_environment}_${deployment_environment}"
+
+echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
+kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=https://api.${k8s_cluster_name}
+
+echo "kubectl configure credentials"
+kubectl config set-credentials "${credential_name}" --token="${k8s_token}"
+
+echo "kubectl configure context"
+kubectl config set-context "${credential_name}" --cluster="${k8s_cluster_name}" --user="${credential_name}" --namespace="${namespace}"
+
+echo "kubectl use circleci context"
+kubectl config use-context $credential_name
+
+echo "apply kubernetes changes to ${platform_environment} ${deployment_environment}"
+
+## Normal deployment via git crypt
+##
+if [[ ! -d app-secrets ]]; then
+  GIT_SSH_COMMAND="ssh -v -i ${ssh_file_for_secrets} -o \"IdentitiesOnly=yes\"" git clone git@github.com:ministryofjustice/${application_name}-deploy.git app-secrets
+  echo ${encoded_git_crypt_key} | base64 -d > app-secrets/git_crypt.key
+  cd app-secrets && git-crypt unlock git_crypt.key && cd ..
+  pwd
+fi
+
+chartname="${application_name}-chart"
+config_file="/tmp/${application_name}-${environment_full_name}.yaml"
+
+helm_command=''
+
+values_config="app-secrets/values/${environment_full_name}-values.yaml"
+if [[ -f "$values_config" ]]; then
+  helm_command="${helm_command} -f $values_config"
+else
+  echo "${values_config} not found. Skipping"
+fi
+
+shared_config="app-secrets/secrets/shared-secrets-values.yaml"
+if [[ -f "$shared_config" ]]; then
+  helm_command="${helm_command} -f $shared_config"
+else
+  echo "${shared_config} not found. Skipping"
+fi
+
+secrets_config="app-secrets/secrets/${environment_full_name}-secrets-values.yaml"
+if [[ -f "$secrets_config" ]]; then
+  helm_command="${helm_command} -f $secrets_config"
+else
+  echo "${secrets_config} not found. Skipping"
+fi
+
+helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} --set environmentName=${environment_full_name} --set platformEnv=${platform_environment}"
+
+echo $helm_command
+
+echo "Writing ${environment_full_name} config to $config_file"
+$helm_command > $config_file
+
+kubectl apply -f $config_file -n "${namespace}"
+
+# echo "Restarting pods"
+# kubectl -n ${namespace} rollout restart deployment
