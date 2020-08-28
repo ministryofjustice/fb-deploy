@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-set -e -u -o pipefail
+set -e -o pipefail
 
 k8s_cluster_cert=$K8S_CLUSTER_CERT
 k8s_cluster_name=$K8S_CLUSTER_NAME
@@ -25,30 +25,26 @@ echo "Getting ECR credentials"
 ecr_username=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_username}" | base64 -d)
 ecr_password=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_password}" | base64 -d)
 
-## If ecr_credentials_secret contains more than one ecr image to build and push
-#
-if [[ $ecr_credentials_secret == *":"* ]]; then
-  ecr_credentials=$(echo $ecr_credentials_secret | tr ":" "\n")
-else
-  ecr_credentials=($ecr_credentials_secret)
-fi
+ecr_credentials=$(kubectl get secrets -n formbuilder-repos)
 
-for ecr_credential in "${ecr_credentials[@]}"; do
-  echo "Getting secrets from AWS"
-  export AWS_DEFAULT_REGION=eu-west-2
-  export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos "${ecr_credential}" -o jsonpath='{.data.access_key_id}' | base64 -d)
-  export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos "${ecr_credential}" -o jsonpath='{.data.secret_access_key}' | base64 -d)
-  export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos "${ecr_credential}" -o jsonpath='{.data.repo_url}' | base64 -d)
+for ecr_credential in ${ecr_credentials[@]}; do
+  if [[ ${ecr_credential} == *"${ecr_credentials_secret}"* ]]; then
+    echo "Getting secrets from AWS"
+    export AWS_DEFAULT_REGION=eu-west-2
+    export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
+    export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
+    export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
 
-  echo 'Logging into AWS ECR...'
-  aws ecr get-login-password --region eu-west-2 | docker login --username "${ecr_username}" --password-stdin "${ecr_password}"
+    echo 'Logging into AWS ECR...'
+    aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
 
-  echo  'Building docker image...'
-  docker build -t "${ECR_REPO_URL}:latest-${environment_name}" -t "${ECR_REPO_URL}:${build_SHA}" -f ./Dockerfile .
+    echo  'Building docker image...'
+    docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .
 
-  echo 'Pushing latest docker image...'
-  docker push "${ECR_REPO_URL}:latest-${environment_name}"
+    echo 'Pushing latest docker image...'
+    docker push ${ECR_REPO_URL}:latest-${environment_name}
 
-  echo 'Pushing current build SHA docker image...'
-  docker push "${ECR_REPO_URL}:${build_SHA}"
+    echo 'Pushing current build SHA docker image...'
+    docker push ${ECR_REPO_URL}:${build_SHA}
+  fi
 done
