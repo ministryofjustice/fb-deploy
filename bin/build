@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 set -e -u -o pipefail
 
 k8s_cluster_cert=$K8S_CLUSTER_CERT
@@ -65,7 +65,6 @@ for ecr_credential in ${ecr_credentials[@]}; do
       docker push ${ECR_REPO_URL}:${build_SHA}
     else
       echo "Dockerfile ${dockerfile} not found! :("
-      exit 1
     fi
   fi
 done
