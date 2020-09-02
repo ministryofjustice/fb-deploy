@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 set -e -u -o pipefail
 
 ## Platform environment: test or live
@@ -43,19 +43,20 @@ kubectl config use-context $credential_name
 
 echo "apply kubernetes changes to ${platform_environment} ${deployment_environment}"
 
-## Normal deployment via git crypt
-##
+helm_command=''
+chartname="${application_name}-chart"
+config_file="/tmp/${application_name}-${environment_full_name}.yaml"
+
+################################################################
+## Begin git crypt
+################################################################
+
 if [[ ! -d app-secrets ]]; then
   GIT_SSH_COMMAND="ssh -v -i ${ssh_file_for_secrets} -o \"IdentitiesOnly=yes\"" git clone git@github.com:ministryofjustice/${application_name}-deploy.git app-secrets
   echo ${encoded_git_crypt_key} | base64 -d > app-secrets/git_crypt.key
   cd app-secrets && git-crypt unlock git_crypt.key && cd ..
   pwd
 fi
-
-chartname="${application_name}-chart"
-config_file="/tmp/${application_name}-${environment_full_name}.yaml"
-
-helm_command=''
 
 values_config="app-secrets/values/${environment_full_name}-values.yaml"
 if [[ -f "$values_config" ]]; then
@@ -81,6 +82,10 @@ fi
 helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} --set environmentName=${environment_full_name} --set platformEnv=${platform_environment}"
 
 echo $helm_command
+
+################################################################
+# End git-crypt
+################################################################
 
 echo "Writing ${environment_full_name} config to $config_file"
 $helm_command > $config_file

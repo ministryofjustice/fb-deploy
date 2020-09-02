@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 set -e -u -o pipefail
 
 k8s_cluster_cert=$K8S_CLUSTER_CERT
@@ -21,24 +21,50 @@ kubectl config set-credentials ${service_account} --token=${k8s_token}
 kubectl config set-context ${service_account} --cluster=${k8s_cluster_name} --user=${service_account} --namespace=${k8s_namespace}
 kubectl config use-context ${service_account}
 
-echo "Getting secrets from AWS"
-export AWS_DEFAULT_REGION=eu-west-2
-export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.access_key_id}' | base64 -d)
-export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret}  -o jsonpath='{.data.secret_access_key}' | base64 -d)
-export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credentials_secret} -o jsonpath='{.data.repo_url}' | base64 -d)
-
 echo "Getting ECR credentials"
 ecr_username=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_username}" | base64 -d)
 ecr_password=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_password}" | base64 -d)
 
-echo  'Building docker image...'
-docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ./Dockerfile .
+echo "Finding right ecr repos from ${k8s_namespace}"
+ecr_credentials=$(kubectl get secrets -n formbuilder-repos)
 
-echo 'Logging into AWS ECR...'
-aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
+for ecr_credential in ${ecr_credentials[@]}; do
+  if [[ ${ecr_credential} == *"${ecr_credentials_secret}"* ]]; then
+    echo "Getting secrets from AWS"
+    export AWS_DEFAULT_REGION=eu-west-2
+    export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
+    export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
+    export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
 
-echo 'Pushing latest docker image...'
-docker push ${ECR_REPO_URL}:latest-${environment_name}
+    echo 'Logging into AWS ECR...'
+    aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
 
-echo 'Pushing current build SHA docker image...'
-docker push ${ECR_REPO_URL}:${build_SHA}
+    echo  'Building docker image...'
+    ecr_credential_match="${ecr_credentials_secret}-"
+    application_type=${ecr_credential#"$ecr_credential_match"}
+
+    # if the ecr name doesn't have a type (e.g ecr-fb-user-datastore-api)
+    # then use Dockerfile.
+    # But if it has a type (e.g ecr-repo-fb-submitter-worker or
+    # ecr-repo-fb-submitter-api) the dockerfile to be build will be
+    # located in docker/worker/Dockerfile
+    #
+    if [[ $application_type == $ecr_credentials_secret ]]; then
+      dockerfile="./Dockerfile"
+    else
+      dockerfile="./docker/${application_type}/Dockerfile"
+    fi
+
+    if [[ -f $dockerfile ]]; then
+      docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ${dockerfile} .
+
+      echo 'Pushing latest docker image...'
+      docker push ${ECR_REPO_URL}:latest-${environment_name}
+
+      echo 'Pushing current build SHA docker image...'
+      docker push ${ECR_REPO_URL}:${build_SHA}
+    else
+      echo "Dockerfile ${dockerfile} not found! :("
+    fi
+  fi
+done
