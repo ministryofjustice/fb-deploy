@@ -11,9 +11,9 @@ results=$(curl -u ${circle_token}: -X POST https://circleci.com/api/v2/project/g
 pipeline_id=$(echo "$results" | jq --raw-output '.id')
 pipeline_number=$(echo "$results" | jq --raw-output '.number')
 
-## Retry for 10 minutes
+## Retry for 22 minutes (maximum time of the slowest acceptance test)
 ##
-retries=60
+retries=132
 sleeping_time=10
 
 for (( i = 0; i < retries; i++ )); do
