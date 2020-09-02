@@ -29,6 +29,8 @@ encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
 
 credential_name="${service_account}_${platform_environment}_${deployment_environment}"
 
+pod_name=${application_name}-${platform_environment}-${deployment_environment}
+
 echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
 kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=https://api.${k8s_cluster_name}
 
@@ -90,7 +92,12 @@ echo $helm_command
 echo "Writing ${environment_full_name} config to $config_file"
 $helm_command > $config_file
 
+echo "Applying configuration"
 kubectl apply -f $config_file -n "${namespace}"
 
-# echo "Restarting pods"
-# kubectl -n ${namespace} rollout restart deployment
+echo "Rolling out and restarting pods"
+kubectl -n ${namespace} rollout restart deployment ${pod_name}
+
+kubectl -n ${namespace} rollout status deployment ${pod_name}
+
+echo "Successfully rolled out and restarted pods"
