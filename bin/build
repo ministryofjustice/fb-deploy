@@ -29,6 +29,10 @@ echo "Finding right ecr repos from ${k8s_namespace}"
 ecr_credentials=$(kubectl get secrets -n formbuilder-repos)
 
 for ecr_credential in ${ecr_credentials[@]}; do
+  if [[ ${ecr_credential} = "ecr-repo-fb-submitter-worker" ]]; then
+    continue
+  fi
+
   if [[ ${ecr_credential} == *"${ecr_credentials_secret}"* ]]; then
     echo "Getting secrets from AWS"
     export AWS_DEFAULT_REGION=eu-west-2
