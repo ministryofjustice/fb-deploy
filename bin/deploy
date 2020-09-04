@@ -104,6 +104,10 @@ kubectl apply -f $config_file -n "${namespace}"
 current_images=$(kubectl get pods -n ${namespace} -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq)
 
 for current_image in ${current_images}; do
+  if [[ ${current_image} == *"/fb-submitter-worker:"* ]]; then
+    continue
+  fi
+
   if [[ $current_image == *$application_name* ]]; then
     image_deployed=false
     pod_prefix=$(echo ${current_image} | awk -F'formbuilder/' '{print $NF}' | cut -f1 -d":")
