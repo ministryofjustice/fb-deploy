@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e -u -o pipefail
 
+get_images() {
+  kubectl get pods -n "$1" -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq
+}
+
 ## Platform environment: test or live
 #
 platform_environment=$PLATFORM_ENV
@@ -94,6 +98,8 @@ echo $helm_command
 echo "Writing ${environment_full_name} config to $config_file"
 $helm_command > $config_file
 
+current_images=$(get_images "${namespace}")
+
 echo "Applying configuration"
 kubectl apply -f $config_file -n "${namespace}"
 
@@ -101,21 +107,26 @@ kubectl apply -f $config_file -n "${namespace}"
 # Begin rollout and restart
 ################################################################
 
-current_images=$(kubectl get pods -n ${namespace} -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq)
-
 for current_image in ${current_images}; do
   if [[ $current_image == *$application_name* ]]; then
     image_deployed=false
     pod_prefix=$(echo ${current_image} | awk -F'formbuilder/' '{print $NF}' | cut -f1 -d":")
     pod_name=${pod_prefix}-${platform_environment}-${deployment_environment}
+    current_SHA=${current_image##*:}
 
-    echo "Rolling out and restarting pods for ${pod_name}"
-    kubectl -n ${namespace} rollout restart deployment ${pod_name}
+    # If the current SHA and the build SHA are the same then it is a redeployment
+    # of the last commit and kubectl apply will not restart the pods.
+    # In this instance we need to call rollout restart
+    if [[ $current_SHA = $build_SHA ]]; then
+      echo "Current SHA and the build SHA are the same"
+      echo "Rolling out and restarting pods for ${pod_name}"
+      kubectl -n ${namespace} rollout restart deployment ${pod_name}
+    fi
 
     kubectl -n ${namespace} rollout status deployment ${pod_name}
 
     echo "Checking correct image was deployed with sha: ${build_SHA}"
-    new_images=$(kubectl get pods -n ${namespace} -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq)
+    new_images=$(get_images "${namespace}")
 
     for image in ${new_images}; do
       if [[ $image == *$build_SHA* ]]; then
