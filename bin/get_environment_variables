@@ -34,28 +34,58 @@ else
   echo $(kubectl get secrets -n formbuilder-repos -o json | jq '.items[] | .metadata["name"]')
 fi
 
-echo
-echo "==========================================="
-echo "| K8S_TOKEN for all platform environments |"
-echo "==========================================="
-echo
-
-namespaces=('test-dev' 'test-production' 'live-dev' 'live-production')
-
-for namespace in ${namespaces[@]}; do
-  secrets=$(kubectl get secrets -n formbuilder-platform-${namespace})
-
-  for secret in ${secrets[@]}; do
-    if [[ $secret == *"circleci-formbuilder-platform-${namespace}"* ]]; then
-      k8s_namespace_token=$(kubectl get secrets -n formbuilder-platform-${namespace} ${secret} -o jsonpath="{.data.token}")
-      formatted_namespace=$(echo ${namespace} | tr '-' '_' | tr [a-z] [A-Z])
-      echo
-      echo "K8S_TOKEN_${formatted_namespace}=${k8s_namespace_token}"
-    fi
-  done
+own_namespaces=()
+formbuilder_namespaces=$(kubectl get namespaces | grep formbuilder)
+app_namespace=$(echo ${app_name} | sed -e 's/fb/formbuilder/g')
+for formbuilder_namespace in ${formbuilder_namespaces}; do
+  if [[ $formbuilder_namespace == *"${app_namespace}"* ]]; then
+    own_namespaces+=("${formbuilder_namespace}")
+  fi
 done
-echo
 
+if [[ ${#own_namespaces[@]} -eq 0 ]]; then
+  echo
+  echo "==========================================="
+  echo "| K8S_TOKEN for all platform environments |"
+  echo "==========================================="
+  echo
+
+  namespaces=('test-dev' 'test-production' 'live-dev' 'live-production')
+
+  for namespace in ${namespaces[@]}; do
+    secrets=$(kubectl get secrets -n formbuilder-platform-${namespace})
+
+    for secret in ${secrets[@]}; do
+      if [[ $secret == *"circleci-formbuilder-platform-${namespace}"* ]]; then
+        k8s_namespace_token=$(kubectl get secrets -n formbuilder-platform-${namespace} ${secret} -o jsonpath="{.data.token}")
+        formatted_namespace=$(echo ${namespace} | tr '-' '_' | tr [a-z] [A-Z])
+        echo
+        echo "K8S_TOKEN_${formatted_namespace}=${k8s_namespace_token}"
+      fi
+    done
+  done
+else
+  echo
+  echo "==========================================="
+  echo "| K8S_TOKEN for all environments |"
+  echo "==========================================="
+  echo
+
+  for own_namespace in ${own_namespaces[@]}; do
+    secrets=$(kubectl get secrets -n ${own_namespace})
+
+    for secret in ${secrets[@]}; do
+      if [[ $secret == *"circleci"* ]]; then
+        k8s_namespace_token=$(kubectl get secrets -n ${own_namespace} ${secret} -o jsonpath="{.data.token}")
+        formatted_namespace=$(echo ${own_namespace##*-} | tr [a-z] [A-Z])
+        echo
+        echo "K8S_TOKEN_${formatted_namespace}=${k8s_namespace_token}"
+      fi
+    done
+  done
+fi
+
+echo
 echo "SSH_FILE_FOR_SECRETS is used for cloning the git crypt secrets repository and clone."
 echo "SSH_FILE_FOR_SECRETS='You need to add fingerprints to Github and then add as env var in the CI config file'"
 echo "CircleCI docs: https://circleci.com/docs/2.0/add-ssh-key/"
