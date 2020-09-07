@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e -u -o pipefail
 
+source "$(dirname "$0")/set_k8s_context"
+
 get_images() {
   kubectl get pods -n "$1" -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq
 }
