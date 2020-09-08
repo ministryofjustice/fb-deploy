@@ -3,6 +3,9 @@ set -e -u -o pipefail
 
 source "$(dirname "$0")/set_k8s_context"
 
+k8s_token=$(echo $K8S_TOKEN | base64 -d)
+k8s_namespace=formbuilder-repos
+
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
 
 environment_name=$ENVIRONMENT_NAME
@@ -11,11 +14,13 @@ build_SHA=$BUILD_SHA
 echo "build and push docker images"
 echo "SHA is ${build_SHA}"
 
+set_context "circleci" ${k8s_namespace} ${k8s_token}
+
 echo "Getting ECR credentials"
 ecr_username=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_username}" | base64 -d)
 ecr_password=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_password}" | base64 -d)
 
-echo "Finding right ecr repos from formbuilder-repos namespace"
+echo "Finding right ecr repos from ${k8s_namespace}"
 ecr_credentials=$(kubectl get secrets -n formbuilder-repos)
 
 for ecr_credential in ${ecr_credentials[@]}; do
