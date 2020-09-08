@@ -92,4 +92,4 @@ echo "CircleCI docs: https://circleci.com/docs/2.0/add-ssh-key/"
 echo "Github docs: https://circleci.com/docs/2.0/gh-bb-integration/#creating-a-github-deploy-key"
 echo
 
-echo "ENCODED_GIT_CRYPT_KEY=No idea how to find"
+echo "ENCODED_GIT_CRYPT_KEY needs to be exported from the app specific secrets repo. Follow the instructions found in the Runbook"
