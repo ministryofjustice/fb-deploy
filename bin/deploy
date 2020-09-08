@@ -11,13 +11,17 @@ platform_environment=$PLATFORM_ENV
 
 ## Deployment environment: dev (draft), production (published)
 #
-deployment_environment=$DEPLOYMENT_ENV
+deployment_environment=${DEPLOYMENT_ENV-}
 
-environment_full_name="${platform_environment}-${deployment_environment}"
+if [ -z "$deployment_environment" ]; then
+  environment_full_name="${platform_environment}"
+else
+  environment_full_name="${platform_environment}-${deployment_environment}"
+fi
 
 ## Concatenate K8S_TOKEN_TEST_DEV for example
 ##
-k8s_environment_name=$(echo ${platform_environment}_${deployment_environment} | tr [a-z] [A-Z]})
+k8s_environment_name=$(echo ${environment_full_name} | tr '-' '_' | tr [a-z] [A-Z]})
 k8s_token_env_var_name="K8S_TOKEN_${k8s_environment_name}"
 k8s_token=$(eval "echo \${$k8s_token_env_var_name}" | base64 -d)
 
@@ -31,7 +35,7 @@ namespace=$K8S_NAMESPACE
 ssh_file_for_secrets=$SSH_FILE_FOR_SECRETS
 encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
 
-credential_name="${service_account}_${platform_environment}_${deployment_environment}"
+credential_name="${service_account}_$(echo ${environment_full_name} | tr '-' '_')"
 
 ################################################################
 ## Begin setting kubernetes context
@@ -111,7 +115,7 @@ for current_image in ${current_images}; do
   if [[ $current_image == *$application_name* ]]; then
     image_deployed=false
     pod_prefix=$(echo ${current_image} | awk -F'formbuilder/' '{print $NF}' | cut -f1 -d":")
-    pod_name=${pod_prefix}-${platform_environment}-${deployment_environment}
+    pod_name=${pod_prefix}-${environment_full_name}
     current_SHA=${current_image##*:}
 
     # If the current SHA and the build SHA are the same then it is a redeployment
