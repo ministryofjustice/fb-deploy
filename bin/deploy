@@ -34,7 +34,7 @@ namespace=$K8S_NAMESPACE
 ssh_file_for_secrets=$SSH_FILE_FOR_SECRETS
 encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
 
-credential_name="${service_account}_$(echo ${environment_full_name} | tr '-' '_')"
+credential_name="circleci_$(echo ${environment_full_name} | tr '-' '_')"
 
 ################################################################
 ## Begin setting kubernetes context

@@ -18,8 +18,6 @@ echo "Set these environment variables in your CI"
 echo
 echo "K8S_CLUSTER_NAME=live-1.cloud-platform.service.justice.gov.uk"
 echo
-echo "SERVICE_ACCOUNT=circleci"
-echo
 echo "K8S_CLUSTER_CERT=${cert}"
 echo
 echo "K8S_TOKEN=${token}"
