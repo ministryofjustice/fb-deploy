@@ -3,6 +3,10 @@ set -e -u -o pipefail
 
 app_name=$1
 
+builder_image_url=$(kubectl get secrets -n formbuilder-repos ecr-repo-fb-builder -o json | jq -r '.data["repo_url"]' | base64 -D)
+builder_image_access_key_id=$(kubectl get secrets -n formbuilder-repos ecr-repo-fb-builder -o json | jq -r '.data["access_key_id"]' | base64 -D)
+builder_image_secret_access_key=$(kubectl get secrets -n formbuilder-repos ecr-repo-fb-builder -o json | jq -r '.data["secret_access_key"]' | base64 -D)
+
 ecr_repos=$(kubectl get secrets -n formbuilder-repos)
 
 for repo in ${ecr_repos[@]}; do
@@ -15,6 +19,12 @@ cert=$(kubectl get secrets -n formbuilder-repos ${circle_secret_name} -o json | 
 token=$(kubectl get secrets -n formbuilder-repos ${circle_secret_name} -o json |  jq -r '.data["token"]')
 
 echo "Set these environment variables in your CI"
+echo
+echo "AWS_BUILD_IMAGE_ECR_ACCOUNT_URL=${builder_image_url}:latest"
+echo
+echo "AWS_BUILD_IMAGE_ACCESS_KEY_ID=${builder_image_access_key_id}"
+echo
+echo "AWS_BUILD_IMAGE_SECRET_ACCESS_KEY=${builder_image_secret_access_key}"
 echo
 echo "K8S_CLUSTER_NAME=live-1.cloud-platform.service.justice.gov.uk"
 echo
