@@ -6,6 +6,9 @@ Build and Deployment scripts for From Builder platform and services.
 
 In order to interact with the MoJ Cloud Platform there are certain environment variables that need to be set in the pipelines:
 
+- AWS_BUILD_IMAGE_ECR_ACCOUNT_URL
+- AWS_BUILD_IMAGE_ACCESS_KEY_ID
+- AWS_BUILD_IMAGE_SECRET_ACCESS_KEY
 - ECR_CREDENTIALS_SECRET
 - ENCODED_GIT_CRYPT_KEY
 - K8S_CLUSTER_CERT
