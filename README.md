@@ -15,7 +15,6 @@ In order to interact with the MoJ Cloud Platform there are certain environment v
 - K8S_TOKEN_TEST_PRODUCTION
 - K8S_TOKEN_LIVE_DEV
 - K8S_TOKEN_LIVE_PRODUCTION
-- SERVICE_ACCOUNT
 - SSH_FILE_FOR_SECRETS
 
 These can be obtained by having the necessary permissions to [interact with Cloud Platform](https://user-guide.cloud-platform.service.justice.gov.uk/documentation/getting-started/kubectl-config.html#how-to-use-kubectl-to-connect-to-the-cluster).

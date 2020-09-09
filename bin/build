@@ -1,11 +1,10 @@
 #!/bin/bash
 set -e -u -o pipefail
 
-k8s_cluster_cert=$K8S_CLUSTER_CERT
-k8s_cluster_name=$K8S_CLUSTER_NAME
+source "$(dirname "$0")/set_k8s_context"
+
 k8s_token=$(echo $K8S_TOKEN | base64 -d)
 k8s_namespace=formbuilder-repos
-service_account=$SERVICE_ACCOUNT
 
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
 
@@ -15,11 +14,7 @@ build_SHA=$BUILD_SHA
 echo "build and push docker images"
 echo "SHA is ${build_SHA}"
 
-echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
-kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=https://api.${k8s_cluster_name}
-kubectl config set-credentials ${service_account} --token=${k8s_token}
-kubectl config set-context ${service_account} --cluster=${k8s_cluster_name} --user=${service_account} --namespace=${k8s_namespace}
-kubectl config use-context ${service_account}
+set_context "circleci" ${k8s_namespace} ${k8s_token}
 
 echo "Getting ECR credentials"
 ecr_username=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_username}" | base64 -d)

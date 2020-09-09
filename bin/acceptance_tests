@@ -1,7 +1,12 @@
 #!/bin/bash
 set -e -u -o pipefail
 
-circle_token=$CIRCLE_TOKEN
+source "$(dirname "$0")/set_k8s_context"
+
+k8s_token=$(echo $K8S_TOKEN | base64 -d)
+
+set_context "circleci" "formbuilder-repos" ${k8s_token}
+circle_token=$(kubectl get secrets -n formbuilder-repos circleci-api-token -o jsonpath="{.data.token}" | base64 -d)
 
 # Trigger new pipeline
 #
