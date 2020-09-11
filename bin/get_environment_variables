@@ -101,3 +101,14 @@ echo "Github docs: https://circleci.com/docs/2.0/gh-bb-integration/#creating-a-g
 echo
 
 echo "ENCODED_GIT_CRYPT_KEY needs to be exported from the app specific secrets repo. Follow the instructions found in the Runbook"
+
+echo
+echo "For repos that require acceptance tests:"
+
+client_id=$(kubectl get secrets -n formbuilder-repos google-credentials -o json | jq -r '.data["client_id"]' | base64 -D)
+client_secret=$(kubectl get secrets -n formbuilder-repos google-credentials -o json | jq -r '.data["client_secret"]' | base64 -D)
+refresh_token=$(kubectl get secrets -n formbuilder-repos google-credentials -o json | jq -r '.data["refresh_token"]' | base64 -D)
+echo "GOOGLE_CLIENT_ID=${client_id}"
+echo "GOOGLE_CLIENT_SECRET=${client_secret}"
+echo "GOOGLE_REFRESH_TOKEN=${refresh_token}"
+echo
