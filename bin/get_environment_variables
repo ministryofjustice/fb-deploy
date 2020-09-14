@@ -51,7 +51,26 @@ for formbuilder_namespace in ${formbuilder_namespaces}; do
   fi
 done
 
-if [[ ${#own_namespaces[@]} -eq 0 ]]; then
+if [[ $app_name == 'fb-runner-node' ]]; then
+  namespaces=('test-dev' 'test-production' 'live-dev' 'live-production')
+  echo
+  echo "==========================================="
+  echo "| K8S_TOKEN for all service environments  |"
+  echo "==========================================="
+  echo
+  for namespace in ${namespaces[@]}; do
+    secrets=$(kubectl get secrets -n formbuilder-services-${namespace})
+
+    for secret in ${secrets[@]}; do
+      if [[ $secret == *"circleci-formbuilder-services-${namespace}"* ]]; then
+        k8s_namespace_token=$(kubectl get secrets -n formbuilder-services-${namespace} ${secret} -o jsonpath="{.data.token}")
+        formatted_namespace=$(echo ${namespace} | tr '-' '_' | tr [a-z] [A-Z])
+        echo
+        echo "K8S_TOKEN_${formatted_namespace}=${k8s_namespace_token}"
+      fi
+    done
+  done
+elif [[ ${#own_namespaces[@]} -eq 0 ]]; then
   echo
   echo "==========================================="
   echo "| K8S_TOKEN for all platform environments |"

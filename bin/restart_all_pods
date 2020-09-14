@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e -u -o pipefail
+
+source "$(dirname "$0")/set_k8s_context"
+
+k8s_namespace=$K8S_NAMESPACE
+platform_environment=$PLATFORM_ENV
+deployment_environment=${DEPLOYMENT_ENV}
+environment_full_name="${platform_environment}-${deployment_environment}"
+credential_name="circleci_${environment_full_name}"
+
+## Concatenate K8S_TOKEN_TEST_DEV for example
+##
+k8s_environment_name=$(echo ${environment_full_name} | tr '-' '_' | tr [a-z] [A-Z]})
+k8s_token_env_var_name="K8S_TOKEN_${k8s_environment_name}"
+k8s_token=$(eval "echo \${$k8s_token_env_var_name}" | base64 -d)
+
+set_context "${credential_name}" "${k8s_namespace}" ${k8s_token}
+
+echo "Rolling out and restarting pods for ${k8s_namespace}"
+kubectl rollout restart deployments -n ${k8s_namespace}
+
+kubectl get deploy --output name -n ${k8s_namespace} | xargs -n1 -t kubectl rollout status -n "${k8s_namespace}"
+echo "Rollout and restart completed"
