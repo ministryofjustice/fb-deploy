@@ -11,6 +11,9 @@ In order to interact with the MoJ Cloud Platform there are certain environment v
 - AWS_BUILD_IMAGE_SECRET_ACCESS_KEY
 - ECR_CREDENTIALS_SECRET
 - ENCODED_GIT_CRYPT_KEY
+- GOOGLE_CLIENT_ID
+- GOOGLE_CLIENT_SECRET
+- GOOGLE_REFRESH_TOKEN
 - K8S_CLUSTER_CERT
 - K8S_CLUSTER_NAME
 - K8S_TOKEN
@@ -19,6 +22,7 @@ In order to interact with the MoJ Cloud Platform there are certain environment v
 - K8S_TOKEN_LIVE_DEV
 - K8S_TOKEN_LIVE_PRODUCTION
 - SSH_FILE_FOR_SECRETS
+- SLACK_WEBHOOK
 
 These can be obtained by having the necessary permissions to [interact with Cloud Platform](https://user-guide.cloud-platform.service.justice.gov.uk/documentation/getting-started/kubectl-config.html#how-to-use-kubectl-to-connect-to-the-cluster).
 
