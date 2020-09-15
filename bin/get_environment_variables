@@ -131,3 +131,7 @@ echo "GOOGLE_CLIENT_ID=${client_id}"
 echo "GOOGLE_CLIENT_SECRET=${client_secret}"
 echo "GOOGLE_REFRESH_TOKEN=${refresh_token}"
 echo
+
+slack_webhook=$(kubectl get secrets -n formbuilder-repos slack-webhooks -o json | jq -r '.data["deployments"]' | base64 -D)
+echo "SLACK_WEBHOOK=${slack_webhook}"
+echo
