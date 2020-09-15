@@ -3,5 +3,5 @@ set -e -u -o pipefail
 
 source "$(dirname "$0")/set_up_acceptance_tests"
 
-echo 'Running acceptance tests'
-make spec-ci
+echo 'Running smoke tests'
+make smoke-tests
