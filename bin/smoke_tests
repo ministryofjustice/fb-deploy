@@ -4,4 +4,4 @@ set -e -u -o pipefail
 source "$(dirname "$0")/set_up_acceptance_tests"
 
 echo 'Running smoke tests'
-make smoke-tests
+make smoke-tests -s # -s hides environment variables in log output
