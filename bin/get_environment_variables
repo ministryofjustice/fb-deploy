@@ -135,3 +135,10 @@ echo
 slack_webhook=$(kubectl get secrets -n formbuilder-repos slack-webhooks -o json | jq -r '.data["deployments"]' | base64 -D)
 echo "SLACK_WEBHOOK=${slack_webhook}"
 echo
+
+smoke_test_user=$(kubectl get secrets -n formbuilder-repos smoke-test-form -o jsonpath={.data.smoke_test_user} | base64 -D)
+smoke_test_password=$(kubectl get secrets -n formbuilder-repos smoke-test-form -o jsonpath={.data.smoke_test_password} | base64 -D)
+echo "SMOKE_TEST_USER=${smoke_test_user}"
+echo "SMOKE_TEST_PASSWORD=${smoke_test_password}"
+echo
+echo
