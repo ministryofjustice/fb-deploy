@@ -3,6 +3,35 @@ set -e -u -o pipefail
 
 source "$(dirname "$0")/set_k8s_context"
 
+# $1 repository name
+# $2 image tag
+skip_build_and_push() {
+  # Returns a "An error occurred (ImageNotFoundException)" if image doesn't exist and a non zero code
+  aws ecr describe-images --repository-name "$1" --image-ids imageTag="$2" >> /dev/null
+
+  if [[ $? == 0 ]]; then
+    echo "Image with $2 already exists in $1"
+    echo "Not building or pushing a new image"
+  else
+    return 1
+  fi
+}
+
+# $1 ECR repo URL
+# $2 environment name
+# $3 Image tag
+# $4 Dockerfile path
+build_and_push() {
+  echo "Building image for environment $2 and build SHA $3..."
+  docker build -t "$1:latest-$2" -t "$1:$3" -f "$4" .
+
+  echo "Pushing image for latest-$2"
+  docker push "$1:latest-$2"
+
+  echo "Pushing build SHA $3 image..."
+  docker push "$1:$3"
+}
+
 k8s_token=$(echo $K8S_TOKEN | base64 -d)
 k8s_namespace=formbuilder-repos
 
@@ -25,16 +54,6 @@ ecr_credentials=$(kubectl get secrets -n formbuilder-repos)
 
 for ecr_credential in ${ecr_credentials[@]}; do
   if [[ ${ecr_credential} == *"${ecr_credentials_secret}"* ]]; then
-    echo "Getting secrets from AWS"
-    export AWS_DEFAULT_REGION=eu-west-2
-    export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
-    export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
-    export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
-
-    echo 'Logging into AWS ECR...'
-    aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
-
-    echo  'Building docker image...'
     ecr_credential_match="${ecr_credentials_secret}-"
     application_type=${ecr_credential#"$ecr_credential_match"}
 
@@ -51,13 +70,18 @@ for ecr_credential in ${ecr_credentials[@]}; do
     fi
 
     if [[ -f $dockerfile ]]; then
-      docker build -t ${ECR_REPO_URL}:latest-${environment_name} -t ${ECR_REPO_URL}:${build_SHA} -f ${dockerfile} .
+      echo "Getting secrets from AWS"
+      export AWS_DEFAULT_REGION=eu-west-2
+      export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
+      export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
+      export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
 
-      echo 'Pushing latest docker image...'
-      docker push ${ECR_REPO_URL}:latest-${environment_name}
+      echo 'Logging into AWS ECR...'
+      aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
 
-      echo 'Pushing current build SHA docker image...'
-      docker push ${ECR_REPO_URL}:${build_SHA}
+      repo_name=${ECR_REPO_URL#*/}
+      skip_build_and_push ${repo_name} ${build_SHA} || \
+        build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
     else
       echo "Dockerfile ${dockerfile} not found! :("
     fi
