@@ -17,12 +17,29 @@ In order to interact with the MoJ Cloud Platform there are certain environment v
 - K8S_CLUSTER_CERT
 - K8S_CLUSTER_NAME
 - K8S_TOKEN
+- SSH_FILE_FOR_SECRETS
+- SLACK_WEBHOOK
+- SMOKE_TEST_USER
+- SMOKE_TEST_PASSWORD
+
+Depending on the app you will also need some environment specific K8S tokens. Which ones will vary per app.
+
+For the platform apps and the Runner:
+
 - K8S_TOKEN_TEST_DEV
 - K8S_TOKEN_TEST_PRODUCTION
 - K8S_TOKEN_LIVE_DEV
 - K8S_TOKEN_LIVE_PRODUCTION
-- SSH_FILE_FOR_SECRETS
-- SLACK_WEBHOOK
+
+For Publisher:
+
+- K8S_TOKEN_TEST
+- K8S_TOKEN_LIVE
+
+For the HMCTS Complaints Adapter:
+
+- K8S_TOKEN_STAGING
+- K8S_TOKEN_PRODUCTION
 
 These can be obtained by having the necessary permissions to [interact with Cloud Platform](https://user-guide.cloud-platform.service.justice.gov.uk/documentation/getting-started/kubectl-config.html#how-to-use-kubectl-to-connect-to-the-cluster).
 
@@ -43,6 +60,7 @@ Once you have the required kube config on your machine you can run:
 - fb-submitter
 - fb-user-filestore
 - fb-user-datastore
+- hmcts-complaints-formbuilder-adapter
 
 Set the outputted environment variables in your pipeline of choice.
 
