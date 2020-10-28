@@ -127,9 +127,11 @@ echo "For repos that require acceptance tests:"
 client_id=$(kubectl get secrets -n formbuilder-repos google-credentials -o json | jq -r '.data["client_id"]' | base64 -D)
 client_secret=$(kubectl get secrets -n formbuilder-repos google-credentials -o json | jq -r '.data["client_secret"]' | base64 -D)
 refresh_token=$(kubectl get secrets -n formbuilder-repos google-credentials -o json | jq -r '.data["refresh_token"]' | base64 -D)
+acceptance_tests_private_key=$(kubectl get configmaps -n formbuilder-saas-test fb-acceptance-tests-config-map -o json | jq -r '.data["ENCODED_PRIVATE_KEY"]')
 echo "GOOGLE_CLIENT_ID=${client_id}"
 echo "GOOGLE_CLIENT_SECRET=${client_secret}"
 echo "GOOGLE_REFRESH_TOKEN=${refresh_token}"
+echo "ACCEPTANCE_TESTS_PRIVATE_KEY=${acceptance_tests_private_key}"
 echo
 
 slack_webhook=$(kubectl get secrets -n formbuilder-repos slack-webhooks -o json | jq -r '.data["deployments"]' | base64 -D)
