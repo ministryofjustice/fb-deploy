@@ -5,7 +5,7 @@ source "$(dirname "$0")/set_k8s_context"
 
 # $1 repository name
 # $2 image tag
-skip_build_and_push() {
+push_sha_image() {
   # Returns a "An error occurred (ImageNotFoundException)" if image doesn't exist and a non zero code
   aws ecr describe-images --repository-name "$1" --image-ids imageTag="$2" >> /dev/null
 
@@ -13,7 +13,8 @@ skip_build_and_push() {
     echo "Image with $2 already exists in $1"
     echo "Not building or pushing a new image"
   else
-    return 1
+    echo "Pushing build SHA $2 image..."
+    docker push "$1:$2"
   fi
 }
 
@@ -28,8 +29,8 @@ build_and_push() {
   echo "Pushing image for latest-$2"
   docker push "$1:latest-$2"
 
-  echo "Pushing build SHA $3 image..."
-  docker push "$1:$3"
+  repo_name=${ECR_REPO_URL#*/}
+  push_sha_image ${repo_name} ${build_SHA}
 }
 
 k8s_token=$(echo $K8S_TOKEN | base64 -d)
