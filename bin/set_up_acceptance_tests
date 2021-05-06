@@ -6,8 +6,5 @@ git clone https://github.com/ministryofjustice/fb-acceptance-tests
 
 cd fb-acceptance-tests
 
-echo 'Installing dependencies'
-bundle install
-
 echo 'Setting up acceptance tests'
 make setup-ci -s # -s hides environment variables in log output
