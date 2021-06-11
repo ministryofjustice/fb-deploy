@@ -5,3 +5,6 @@ source "$(dirname "$0")/set_up_acceptance_tests"
 
 echo 'Running smoke tests'
 make smoke-tests -s # -s hides environment variables in log output
+
+echo 'Running smoke tests for the new Runner'
+make smoke-tests-v2 -s # -s hides environment variables in log output
