@@ -8,17 +8,28 @@ k8s_cluster_name=$K8S_CLUSTER_NAME
 # $2 namespace
 # $3 token related to the namespace
 set_context() {
+  echo "*******************************************************************"
   echo "Setting K8S context for ${1} user in ${2} namespace"
-
   echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
   kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=https://api.${k8s_cluster_name}
+  echo "*******************************************************************"
+  echo
 
+  echo "*******************************************************************"
   echo "kubectl configure credentials"
   kubectl config set-credentials ${1} --token=${3}
+  echo "*******************************************************************"
+  echo
 
+  echo "*******************************************************************"
   echo "kubectl configure context"
   kubectl config set-context ${1} --cluster=${k8s_cluster_name} --user=${1} --namespace=${2}
+  echo "*******************************************************************"
+  echo
 
+  echo "*******************************************************************"
   echo "kubectl use circleci context"
   kubectl config use-context ${1}
+  echo "*******************************************************************"
+  echo
 }

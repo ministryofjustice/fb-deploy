@@ -17,8 +17,19 @@ k8s_token=$(eval "echo \${$k8s_token_env_var_name}" | base64 -d)
 
 set_context "${credential_name}" "${k8s_namespace}" ${k8s_token}
 
+echo "*******************************************************************"
 echo "Rolling out and restarting pods for ${k8s_namespace}"
 kubectl rollout restart deployments -n ${k8s_namespace}
+echo "*******************************************************************"
+echo
 
+echo "*******************************************************************"
+echo "Checking rollout status"
 kubectl get deploy --output name -n ${k8s_namespace} | xargs -n1 -t kubectl rollout status -n "${k8s_namespace}"
+echo "*******************************************************************"
+echo
+
+echo "*******************************************************************"
 echo "Rollout and restart completed"
+echo "*******************************************************************"
+echo
