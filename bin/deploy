@@ -229,7 +229,7 @@ for current_image in ${current_images}; do
         # If the current SHA and the build SHA are the same then it is a redeployment
         # of the last commit and kubectl apply will not restart the pods.
         # In this instance we need to call rollout restart
-        if [[ $current_SHA = $build_SHA ]]; then
+        if [[ $current_SHA == $build_SHA ]]; then
           echo "*******************************************************************"
           echo "Current SHA and the build SHA are the same"
           echo "Rolling out and restarting pods for ${deployment}"
