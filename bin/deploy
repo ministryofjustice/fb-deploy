@@ -4,7 +4,11 @@ set -e -u -o pipefail
 source "$(dirname "$0")/set_k8s_context"
 
 get_images() {
+  echo "*******************************************************************"
+  echo "Getting images for $1"
   kubectl get pods -n "$1" -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq
+  echo "*******************************************************************"
+  echo
 }
 
 ## Platform environment: test or live
@@ -20,6 +24,10 @@ if [ -z "$deployment_environment" ]; then
 else
   environment_full_name="${platform_environment}-${deployment_environment}"
 fi
+echo "*******************************************************************"
+echo "environment_full_name is ${environment_full_name}"
+echo "*******************************************************************"
+echo
 
 ## Concatenate K8S_TOKEN_TEST_DEV for example
 ##
@@ -27,9 +35,23 @@ k8s_environment_name=$(echo ${environment_full_name} | tr '-' '_' | tr [a-z] [A-
 k8s_token_env_var_name="K8S_TOKEN_${k8s_environment_name}"
 k8s_token=$(eval "echo \${$k8s_token_env_var_name}" | base64 -d)
 
+echo "*******************************************************************"
 build_SHA=$BUILD_SHA
+echo "build_SHA is ${build_SHA}"
+echo "*******************************************************************"
+echo
+
+echo "*******************************************************************"
 application_name=$APPLICATION_NAME
+echo "application_name is ${application_name}"
+echo "*******************************************************************"
+echo
+
+echo "*******************************************************************"
 namespace=$K8S_NAMESPACE
+echo "namespace is ${namespace}"
+echo "*******************************************************************"
+echo
 
 ssh_file_for_secrets=$SSH_FILE_FOR_SECRETS
 encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
@@ -42,11 +64,24 @@ credential_name="circleci_$(echo ${environment_full_name} | tr '-' '_')"
 
 set_context "${credential_name}" "${namespace}" ${k8s_token}
 
+echo "*******************************************************************"
 echo "apply kubernetes changes to ${platform_environment} ${deployment_environment}"
+echo "*******************************************************************"
+echo
 
 helm_command=''
+
+echo "*******************************************************************"
 chartname="${application_name}-chart"
+echo "chartname is ${chartname}"
+echo "*******************************************************************"
+echo
+
+echo "*******************************************************************"
 config_file="/tmp/${application_name}-${environment_full_name}.yaml"
+echo "config_file is ${config_file}"
+echo "*******************************************************************"
+echo
 
 ################################################################
 ## Begin git crypt
@@ -63,38 +98,56 @@ values_config="app-secrets/values/${environment_full_name}-values.yaml"
 if [[ -f "$values_config" ]]; then
   helm_command="${helm_command} -f $values_config"
 else
+  echo "*******************************************************************"
   echo "${values_config} not found. Skipping"
+  echo "*******************************************************************"
+  echo
 fi
 
 shared_config="app-secrets/secrets/shared-secrets-values.yaml"
 if [[ -f "$shared_config" ]]; then
   helm_command="${helm_command} -f $shared_config"
 else
+  echo "*******************************************************************"
   echo "${shared_config} not found. Skipping"
+  echo "*******************************************************************"
+  echo
 fi
 
 secrets_config="app-secrets/secrets/${environment_full_name}-secrets-values.yaml"
 if [[ -f "$secrets_config" ]]; then
   helm_command="${helm_command} -f $secrets_config"
 else
+  echo "*******************************************************************"
   echo "${secrets_config} not found. Skipping"
+  echo "*******************************************************************"
+  echo
 fi
 
+echo "*******************************************************************"
+echo "Setting helm_command"
 helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} --set environmentName=${environment_full_name} --set platformEnv=${platform_environment}"
-
 echo $helm_command
+echo "*******************************************************************"
+echo
 
 ################################################################
 # Begin applying configuration
 ################################################################
 
+echo "*******************************************************************"
 echo "Writing ${environment_full_name} config to $config_file"
 $helm_command > $config_file
+echo "*******************************************************************"
+echo
 
 current_images=$(get_images "${namespace}")
 
+echo "*******************************************************************"
 echo "Applying configuration"
 kubectl apply -f $config_file -n "${namespace}"
+echo "*******************************************************************"
+echo
 
 ################################################################
 # Begin rollout and restart
@@ -105,40 +158,68 @@ deployments=$(kubectl get deployments -n ${namespace})
 for current_image in ${current_images}; do
   if [[ $current_image == *$application_name* ]]; then
     image_deployed=false
+
+    echo "*******************************************************************"
     app_image_name=$(echo ${current_image} | awk -F'formbuilder/' '{print $NF}' | cut -f1 -d":")
+    echo "app_image_name is ${app_image_name}"
+    echo "*******************************************************************"
+    echo
 
     for deployment in ${deployments}; do
       if [[ $deployment == *$app_image_name* ]]; then
+        echo "*******************************************************************"
         current_SHA=${current_image##*:}
+        echo "current_SHA is ${current_SHA}"
+        echo "*******************************************************************"
+        echo
 
         # If the current SHA and the build SHA are the same then it is a redeployment
         # of the last commit and kubectl apply will not restart the pods.
         # In this instance we need to call rollout restart
         if [[ $current_SHA = $build_SHA ]]; then
+          echo "*******************************************************************"
           echo "Current SHA and the build SHA are the same"
           echo "Rolling out and restarting pods for ${deployment}"
           kubectl -n ${namespace} rollout restart deployment ${deployment}
+          echo "*******************************************************************"
+          echo
         fi
 
+        echo "*******************************************************************"
+        echo "Checking rollout status for ${deployment}"
         kubectl -n ${namespace} rollout status deployment ${deployment}
+        echo "*******************************************************************"
+        echo
 
+        echo "*******************************************************************"
         echo "Checking correct image was deployed with sha: ${build_SHA}"
         new_images=$(get_images "${namespace}")
+        echo "*******************************************************************"
+        echo
 
         for image in ${new_images}; do
           if [[ $image == *$build_SHA* ]]; then
+            echo "*******************************************************************"
             echo "Successfully rolled out and restarted ${deployment} pods in ${namespace}"
             image_deployed=true
+            echo "*******************************************************************"
+            echo
           fi
         done
       fi
     done
 
     if [[ "${image_deployed}" = false ]]; then
+      echo "*******************************************************************"
       echo "Unable to find image using ${build_SHA}"
+      echo "*******************************************************************"
+      echo
       exit 1
     fi
   fi
 done
 
+echo "*******************************************************************"
 echo "Rollout and restart completed"
+echo "*******************************************************************"
+echo
