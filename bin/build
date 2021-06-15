@@ -3,49 +3,44 @@ set -e -u -o pipefail
 
 source "$(dirname "$0")/set_k8s_context"
 
-# $1 repository name
-# $2 image tag
-skip_build_and_push() {
-  # Returns a "An error occurred (ImageNotFoundException)" if image doesn't exist and a non zero code
-  aws ecr describe-images --repository-name "$1" --image-ids imageTag="$2" >> /dev/null
-
-  if [[ $? == 0 ]]; then
-    echo "*******************************************************************"
-    echo "Image with $2 already exists in $1"
-    echo "Not building or pushing a new image"
-    echo "*******************************************************************"
-    echo
-  else
-    echo "*******************************************************************"
-    echo "Image $2 does not exist. Will build"
-    echo "*******************************************************************"
-    echo
-    return 1
-  fi
-}
-
 # $1 ECR repo URL
 # $2 environment name
 # $3 Image tag
 # $4 Dockerfile path
 build_and_push() {
   echo "*******************************************************************"
-  echo "Building image for environment $2 and build SHA $3..."
-  docker build -t "$1:latest-$2" -t "$1:$3" -f "$4" .
+  repo_name=${1#*/}
+  echo "repo_name is ${repo_name}"
   echo "*******************************************************************"
   echo
 
-  echo "*******************************************************************"
-  echo "Pushing image for latest-$2"
-  docker push "$1:latest-$2"
-  echo "*******************************************************************"
-  echo
+  if [[ $repo_name == *fb-runner* ]]; then
+    # The fb-runner and fb-runner-node use the latest-test and latest-live tags
+    # The other apps make use of the build SHA as the tag
+    echo "*******************************************************************"
+    echo "Runner app. Building ${repo_name}:latest-$2"
+    docker build -t "$1:latest-$2" -f "$4" .
+    echo "*******************************************************************"
+    echo
 
-  echo "*******************************************************************"
-  echo "Pushing build SHA $3 image..."
-  docker push "$1:$3"
-  echo "*******************************************************************"
-  echo
+    echo "*******************************************************************"
+    echo "Pushing image for ${repo_name}:latest-$2"
+    docker push "$1:latest-$2"
+    echo "*******************************************************************"
+    echo
+  else
+    echo "*******************************************************************"
+    echo "Building image for build SHA $3"
+    docker build -t "$1:$3" -f "$4" .
+    echo "*******************************************************************"
+    echo
+
+    echo "*******************************************************************"
+    echo "Pushing build SHA $3 image"
+    docker push "$1:$3"
+    echo "*******************************************************************"
+    echo
+  fi
 }
 
 k8s_token=$(echo $K8S_TOKEN | base64 -d)
@@ -53,12 +48,21 @@ k8s_namespace=formbuilder-repos
 
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
 
+echo "*******************************************************************"
 environment_name=$ENVIRONMENT_NAME
-build_SHA=$BUILD_SHA
+echo "environment_name is ${environment_name}"
+echo "*******************************************************************"
+echo
 
 echo "*******************************************************************"
-echo "build and push docker images"
-echo "SHA is ${build_SHA}"
+build_SHA=$BUILD_SHA
+echo "build_SHA is ${build_SHA}"
+echo "*******************************************************************"
+echo
+
+echo "*******************************************************************"
+branch_name=$CIRCLE_BRANCH
+echo "branch_name is ${branch_name}"
 echo "*******************************************************************"
 echo
 
@@ -79,9 +83,11 @@ echo
 
 for ecr_credential in ${ecr_credentials[@]}; do
   if [[ ${ecr_credential} == *"${ecr_credentials_secret}"* ]]; then
+    # Despite this saying it is a secret and/or credential, this is in fact just
+    # the name of an ECR repository for an app. Unfortunate naming
     echo "*******************************************************************"
+    echo "ECR repo ${ecr_credential} matched"
     ecr_credential_match="${ecr_credentials_secret}-"
-    echo "ECR repo matched ${ecr_credential_match}"
     echo "*******************************************************************"
     echo
 
@@ -109,6 +115,7 @@ for ecr_credential in ${ecr_credentials[@]}; do
       echo "*******************************************************************"
       echo
 
+      echo "*******************************************************************"
       echo "Getting secrets from AWS"
       export AWS_DEFAULT_REGION=eu-west-2
       export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
