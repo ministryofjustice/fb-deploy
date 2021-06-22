@@ -29,17 +29,29 @@ build_and_push() {
     echo "*******************************************************************"
     echo
   else
-    echo "*******************************************************************"
-    echo "Building image for build SHA $3"
-    docker build -t "$1:$3" -f "$4" .
-    echo "*******************************************************************"
-    echo
+    # Returns a "An error occurred (ImageNotFoundException)" if image doesn't
+    # exist and a non zero code
+    aws ecr describe-images --repository-name "$repo_name" --image-ids imageTag="$3" >> /dev/null
 
-    echo "*******************************************************************"
-    echo "Pushing build SHA $3 image"
-    docker push "$1:$3"
-    echo "*******************************************************************"
-    echo
+    if [[ $? == 0 ]]; then
+      echo "*******************************************************************"
+      echo "Image with $3 already exists in ${repo_name}"
+      echo "Not building or pushing a new image"
+      echo "*******************************************************************"
+      echo
+    else
+      echo "*******************************************************************"
+      echo "Building image for build SHA $3"
+      docker build -t "$1:$3" -f "$4" .
+      echo "*******************************************************************"
+      echo
+
+      echo "*******************************************************************"
+      echo "Pushing build SHA $3 image"
+      docker push "$1:$3"
+      echo "*******************************************************************"
+      echo
+    fi
   fi
 }
 
