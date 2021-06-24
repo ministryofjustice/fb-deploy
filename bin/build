@@ -148,7 +148,7 @@ for ecr_credential in ${ecr_credentials[@]}; do
       # the environment, such as api, web, worker or workers. yes we have both singular and plural :(
       # also the image_type is the same as the application_type found found above
       # otherwise skip the build
-      if [[ -z "$IMAGE_TYPE" ]] || [[ -n "$IMAGE_TYPE" && "$IMAGE_TYPE" == "$application_type" ]]; then
+      if [[ -z "${IMAGE_TYPE-}" ]] || [[ -n "$IMAGE_TYPE" && "$IMAGE_TYPE" == "$application_type" ]]; then
         echo "*******************************************************************"
         echo "Using Dockerfile from ${dockerfile}"
         echo "*******************************************************************"
