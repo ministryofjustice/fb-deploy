@@ -141,27 +141,36 @@ for ecr_credential in ${ecr_credentials[@]}; do
     fi
 
     if [[ -f $dockerfile ]]; then
-      echo "*******************************************************************"
-      echo "Using Dockerfile from ${dockerfile}"
-      echo "*******************************************************************"
-      echo
+      # continue build if it is an app without a type. i.e it has no workers
+      # e.g the datastore or the filestore
+      # or
+      # continue build if the deployment config injected an image_type into
+      # the environment, such as api, web, worker or workers. yes we have both singular and plural :(
+      # also the image_type is the same as the application_type found found above
+      # otherwise skip the build
+      if [[ -z "$IMAGE_TYPE" ]] || [[ -n "$IMAGE_TYPE" && "$IMAGE_TYPE" == "$application_type" ]]; then
+        echo "*******************************************************************"
+        echo "Using Dockerfile from ${dockerfile}"
+        echo "*******************************************************************"
+        echo
 
-      echo "*******************************************************************"
-      echo "Getting secrets from AWS"
-      export AWS_DEFAULT_REGION=eu-west-2
-      export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
-      export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
-      export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
-      echo "*******************************************************************"
-      echo
+        echo "*******************************************************************"
+        echo "Getting secrets from AWS"
+        export AWS_DEFAULT_REGION=eu-west-2
+        export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
+        export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
+        export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
+        echo "*******************************************************************"
+        echo
 
-      echo "*******************************************************************"
-      echo 'Logging into AWS ECR'
-      aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
-      echo "*******************************************************************"
-      echo
+        echo "*******************************************************************"
+        echo 'Logging into AWS ECR'
+        aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
+        echo "*******************************************************************"
+        echo
 
-      build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
+        build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
+      fi
     else
       echo "*******************************************************************"
       echo "Dockerfile ${dockerfile} not found! :("
