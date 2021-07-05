@@ -137,7 +137,7 @@ if [[ $branch_name == testable-* ]] && [[ $application_name == 'fb-editor' ]]; t
   # overridden to include the name of the branch which will become the host
   # Passing editor_host into the helm command will override the editor_host
   # that is set in the secrets for the editor
-  editor_host="${EDITOR_HOST}"
+  editor_host="${branch_name}.apps.live-1.cloud-platform.service.justice.gov.uk"
   echo "Testable branch. Setting editor_host to ${editor_host}"
 
   # Also set app_name to be the name of the branch
