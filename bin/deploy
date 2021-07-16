@@ -4,11 +4,7 @@ set -e -u -o pipefail
 source "$(dirname "$0")/set_k8s_context"
 
 get_images() {
-  echo "*******************************************************************"
-  echo "Getting images for $1"
   kubectl get pods -n "$1" -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq
-  echo "*******************************************************************"
-  echo
 }
 
 ## Platform environment: test or live
@@ -181,6 +177,13 @@ echo
 current_images=$(get_images "${namespace}")
 
 echo "*******************************************************************"
+echo "Getting images for ${namespace}"
+echo 'Current images:'
+echo ${current_images}
+echo "*******************************************************************"
+echo
+
+echo "*******************************************************************"
 echo "Applying configuration"
 kubectl apply -f $config_file -n "${namespace}"
 echo "*******************************************************************"
@@ -247,6 +250,8 @@ for current_image in ${current_images}; do
         echo "*******************************************************************"
         echo "Checking correct image was deployed with sha: ${build_SHA}"
         new_images=$(get_images "${namespace}")
+        echo 'New images:'
+        echo ${new_images}
         echo "*******************************************************************"
         echo
 
