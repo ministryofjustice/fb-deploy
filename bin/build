@@ -74,7 +74,24 @@ build_and_push() {
   fi
 }
 
-k8s_token=$(echo $K8S_TOKEN | base64 -d)
+if [ -z "$EKS_TOKEN" ]; then
+  k8s_token=$(echo $K8S_TOKEN | base64 -d)
+else
+  k8s_token=$(echo $EKS_TOKEN | base64 -d)
+fi
+
+if [ -z "$EKS_CLUSTER_CERT" ]; then
+  cluster_cert=$K8S_CLUSTER_CERT
+else
+  cluster_cert=$EKS_CLUSTER_CERT
+fi
+
+if [ -z "$EKS_CLUSTER_NAME" ]; then
+  cluster_name=$K8S_CLUSTER_NAME
+else
+  cluster_name=$EKS_CLUSTER_NAME
+fi
+
 k8s_namespace=formbuilder-repos
 
 ecr_credentials_secret=$ECR_CREDENTIALS_SECRET
@@ -97,7 +114,7 @@ echo "branch_name is ${branch_name}"
 echo "*******************************************************************"
 echo
 
-set_context "circleci" ${k8s_namespace} ${k8s_token}
+set_context "circleci" "${k8s_namespace}" "${k8s_token}" "${cluster_cert}" "${cluster_name}"
 
 echo "*******************************************************************"
 echo "Getting ECR credentials"
