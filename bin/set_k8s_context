@@ -7,13 +7,20 @@ set -e -u -o pipefail
 # $4 cluster cert
 # $5 cluster name
 set_context() {
-  echo "*******************************************************************"
-  echo "Setting K8S context for ${1} user in ${2} namespace"
-  echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
   k8s_cluster_cert=$4
   k8s_cluster_name=$5
 
-  kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=https://api.${k8s_cluster_name}
+  echo "*******************************************************************"
+  echo "Setting K8S context for ${1} user in ${2} namespace"
+  echo -n ${k8s_cluster_cert} | base64 -d > ./ca.crt
+
+  if [[ ${k8s_cluster_name} == *"live-1"* ]]; then
+    server="https://api.${k8s_cluster_name}"
+  else
+    server="https://${k8s_cluster_name}"
+  fi
+
+  kubectl config set-cluster ${k8s_cluster_name} --certificate-authority=./ca.crt --server=${server}
   echo "*******************************************************************"
   echo
 
