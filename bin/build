@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e -u -o pipefail
+set -e -o pipefail
 
 source "$(dirname "$0")/set_k8s_context"
 
@@ -74,22 +74,29 @@ build_and_push() {
   fi
 }
 
-if [ -z "$EKS_TOKEN" ]; then
-  k8s_token=$(echo $K8S_TOKEN | base64 -d)
-else
+# if env var EKS_TOKEN exists then set otherwise set the token as K8S_TOKEN
+if env | grep -q ^EKS_TOKEN=; then
+  echo "EKS_TOKEN found. Using EKS_TOKEN env var as a token."
   k8s_token=$(echo $EKS_TOKEN | base64 -d)
+else
+  echo "EKS_TOKEN not found. Using K8S_TOKEN env var as a token."
+  k8s_token=$(echo $K8S_TOKEN | base64 -d)
 fi
 
-if [ -z "$EKS_CLUSTER_CERT" ]; then
-  cluster_cert=$K8S_CLUSTER_CERT
-else
+if env | grep -q ^EKS_CLUSTER_CERT=; then
+  echo "EKS_CLUSTER_CERT found. Using EKS_CLUSTER_CERT env var."
   cluster_cert=$EKS_CLUSTER_CERT
+else
+  echo "EKS_CLUSTER_CERT not found. Using K8S_CLUSTER_CERT env var."
+  cluster_cert=$K8S_CLUSTER_CERT
 fi
 
-if [ -z "$EKS_CLUSTER_NAME" ]; then
-  cluster_name=$K8S_CLUSTER_NAME
-else
+if env | grep -q ^EKS_CLUSTER_NAME=; then
+  echo "EKS_CLUSTER_NAME found. Using EKS_CLUSTER_NAME env var."
   cluster_name=$EKS_CLUSTER_NAME
+else
+  echo "EKS_CLUSTER_NAME not found. Using K8S_CLUSTER_NAME env var."
+  cluster_name=$K8S_CLUSTER_NAME
 fi
 
 k8s_namespace=formbuilder-repos
