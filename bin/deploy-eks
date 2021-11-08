@@ -26,7 +26,7 @@ echo "*******************************************************************"
 echo
 
 k8s_environment_name=$(echo ${environment_full_name} | tr '-' '_' | tr [a-z] [A-Z]})
-k8s_token_env_var_name="K8S_TOKEN_${k8s_environment_name}"
+k8s_token_env_var_name="EKS_TOKEN_${k8s_environment_name}"
 k8s_token=$(eval "echo \${$k8s_token_env_var_name}" | base64 -d)
 
 echo "*******************************************************************"
@@ -62,7 +62,7 @@ credential_name="circleci_$(echo ${environment_full_name} | tr '-' '_')"
 ## Begin setting kubernetes context
 ################################################################
 
-set_context "${credential_name}" "${namespace}" ${k8s_token} "${K8S_CLUSTER_CERT}" "${K8S_CLUSTER_NAME}"
+set_context "${credential_name}" "${namespace}" ${k8s_token} "${EKS_CLUSTER_CERT}" "${EKS_CLUSTER_NAME}"
 
 echo "*******************************************************************"
 echo "apply kubernetes changes to ${platform_environment} ${deployment_environment}"
@@ -132,13 +132,13 @@ if [[ $branch_name == testable-* ]] && [[ $application_name == 'fb-editor' ]]; t
   # Passing editor_host into the helm command will override the editor_host
   # that is set in the secrets for the editor
 
-  editor_host="${branch_name}.apps.live-1.cloud-platform.service.justice.gov.uk"
+  editor_host="${branch_name}.apps.live.cloud-platform.service.justice.gov.uk"
   echo "Testable branch. Setting editor_host to ${editor_host}"
 
   # Also set app_name to be the name of the branch
   echo "Setting app_name to ${branch_name}"
 
-  helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} \
+  helm_command="helm template deploy-eks/${chartname} $helm_command --set circleSha1=${build_SHA} \
   --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
   --set editor_host=${editor_host} --set app_name=${branch_name}"
 else
@@ -150,7 +150,7 @@ else
   # they can potentially use the same mechanism the editor does
   echo "Setting app_name to ${application_name}"
 
-  helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} \
+  helm_command="helm template deploy-eks/${chartname} $helm_command --set circleSha1=${build_SHA} \
   --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
   --set app_name=${application_name}"
 fi
