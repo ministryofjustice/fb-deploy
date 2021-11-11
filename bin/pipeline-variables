@@ -26,7 +26,7 @@ echo "AWS_BUILD_IMAGE_ACCESS_KEY_ID=${builder_image_access_key_id}"
 echo
 echo "AWS_BUILD_IMAGE_SECRET_ACCESS_KEY=${builder_image_secret_access_key}"
 echo
-echo "EKS_CLUSTER_NAME=live.cloud-platform.service.justice.gov.uk"
+echo "EKS_CLUSTER_NAME=DF366E49809688A3B16EEC29707D8C09.gr7.eu-west-2.eks.amazonaws.com"
 echo
 echo "EKS_CLUSTER_CERT=${cert}"
 echo
