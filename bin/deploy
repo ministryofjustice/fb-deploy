@@ -157,6 +157,13 @@ fi
 echo "*******************************************************************"
 echo
 
+if [[ $application_name == 'fb-publisher' ]]; then
+  # The clusters (K8S and EKS) have different names for their bearer tokens
+  # So these tokens have been set in the deployment pipeline
+  bearer_token=$K8S_BEARER_TOKEN
+  helm_command="${helm_command} --set bearer_token=${bearer_token}"
+fi
+
 echo "*******************************************************************"
 echo "Full helm command"
 echo $helm_command
