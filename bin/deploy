@@ -164,6 +164,7 @@ if [[ $application_name == 'fb-publisher' ]]; then
   # it needs this dynamic grep for K8S_BEARER_TOKEN_TEST and
   # K8S_BEARER_TOKEN_LIVE
   bearer_token_env_var_name="K8S_BEARER_TOKEN_${platform_environment}"
+  bearer_token_env_var_name=$(echo $bearer_token_env_var_name | tr '-' '_' | tr [a-z] [A-Z])
   bearer_token=$(eval "echo \${$bearer_token_env_var_name}")
   helm_command="${helm_command} --set bearer_token=${bearer_token}"
 fi
