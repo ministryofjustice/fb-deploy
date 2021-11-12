@@ -160,7 +160,11 @@ echo
 if [[ $application_name == 'fb-publisher' ]]; then
   # The clusters (K8S and EKS) have different names for their bearer tokens
   # So these tokens have been set in the deployment pipeline
-  bearer_token=$EKS_BEARER_TOKEN
+  # Each token is different also per environment (test and live) so
+  # it needs this dynamic echo for EKS_BEARER_TOKEN_TEST and
+  # EKS_BEARER_TOKEN_LIVE
+  bearer_token_env_var_name="EKS_BEARER_TOKEN_${platform_environment}"
+  bearer_token=$(eval "echo \${$bearer_token_env_var_name}")
   helm_command="${helm_command} --set bearer_token=${bearer_token}"
 fi
 
