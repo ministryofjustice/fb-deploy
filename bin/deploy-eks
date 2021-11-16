@@ -169,6 +169,18 @@ if [[ $application_name == 'fb-publisher' ]]; then
   helm_command="${helm_command} --set bearer_token=${bearer_token}"
 fi
 
+if [[ $application_name == 'fb-service-token-cache' ]]; then
+  # The clusters (K8S and EKS) have different names for their bearer tokens
+  # So these tokens have been set in the deployment pipeline
+  # Each token is different also per environment (test-dev, test-production,
+  # live-dev and live-production) so it needs this dynamic grep for
+  # EKS_BEARER_TOKEN_TEST_DEV, EKS_BEARER_TOKEN_LIVE_DEV etc
+  bearer_token_env_var_name="EKS_BEARER_TOKEN_${platform_environment}_${deployment_environment}"
+  bearer_token_env_var_name=$(echo $bearer_token_env_var_name | tr [a-z] [A-Z])
+  bearer_token=$(eval "echo \${$bearer_token_env_var_name}")
+  helm_command="${helm_command} --set bearer_token=${bearer_token}"
+fi
+
 echo "*******************************************************************"
 echo "Full helm command"
 echo $helm_command
