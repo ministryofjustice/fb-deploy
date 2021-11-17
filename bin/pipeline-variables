@@ -70,6 +70,27 @@ if [[ $app_name == 'fb-runner-node' ]]; then
       fi
     done
   done
+elif [[ $app_name == 'fb-metadata-api' ]] || [[ $app_name == 'fb-editor' ]]; then
+  echo
+  echo "==========================================="
+  echo "| EKS_TOKEN for fb-saas environments |"
+  echo "==========================================="
+  echo
+
+  namespaces=('test' 'live')
+
+  for namespace in ${namespaces[@]}; do
+    secrets=$(kubectl get secrets -n formbuilder-saas-${namespace})
+
+    for secret in ${secrets[@]}; do
+      if [[ $secret == *"circleci-formbuilder-saas-${namespace}"* ]]; then
+        k8s_namespace_token=$(kubectl get secrets -n formbuilder-saas-${namespace} ${secret} -o jsonpath="{.data.token}")
+        formatted_namespace=$(echo ${namespace} | tr [a-z] [A-Z])
+        echo
+        echo "EKS_TOKEN_${formatted_namespace}=${k8s_namespace_token}"
+      fi
+    done
+  done
 elif [[ ${#own_namespaces[@]} -eq 0 ]]; then
   echo
   echo "==========================================="
