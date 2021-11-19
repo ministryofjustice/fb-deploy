@@ -157,7 +157,7 @@ fi
 echo "*******************************************************************"
 echo
 
-if [[ $application_name == 'fb-publisher' ]]; then
+if [[ $application_name == 'fb-publisher' || $application_name == 'fb-editor' ]]; then
   # The clusters (K8S and EKS) have different names for their bearer tokens
   # So these tokens have been set in the deployment pipeline
   # Each token is different also per environment (test and live) so
