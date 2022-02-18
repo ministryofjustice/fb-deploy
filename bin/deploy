@@ -152,10 +152,17 @@ else
   if [ -z "$disable_branching" ]; then
     echo "Standard deployment branch"
 
-    # disable_branching environment variable is not there so it is a standard deploy
-    helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} \
-    --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
-    --set app_name=${application_name}"
+    if [[ $platform_environment == 'test' ]] && [[ $application_name == 'fb-editor' ]]; then
+      editor_host="${application_name}-${platform_environment}.apps.live-1.cloud-platform.service.justice.gov.uk"
+      helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} \
+      --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
+      --set app_name=${application_name} --set editor_host=${editor_host}"
+    else
+      # disable_branching environment variable is not there so it is a standard deploy
+      helm_command="helm template deploy/${chartname} $helm_command --set circleSha1=${build_SHA} \
+      --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
+      --set app_name=${application_name}"
+    fi
   else
     # disable_branching is only used by the editor app
     app_name=fb-editor-test-no-branching

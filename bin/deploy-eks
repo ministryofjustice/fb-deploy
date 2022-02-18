@@ -142,17 +142,40 @@ if [[ $branch_name == testable-* ]] && [[ $application_name == 'fb-editor' ]]; t
   --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
   --set editor_host=${editor_host} --set app_name=${branch_name}"
 else
-  echo "Standard deployment branch"
-
   # Currently only the editor will make use of the environment variable app_name
   # when doing a standard deployment
   # Should another app in the future require testable branches to be built then
   # they can potentially use the same mechanism the editor does
   echo "Setting app_name to ${application_name}"
 
-  helm_command="helm template deploy-eks/${chartname} $helm_command --set circleSha1=${build_SHA} \
-  --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
-  --set app_name=${application_name}"
+  disable_branching=${DISABLE_BRANCHING-}
+  if [ -z "$disable_branching" ]; then
+    echo "Standard deployment branch"
+
+    if [[ $platform_environment == 'test' ]] && [[ $application_name == 'fb-editor' ]]; then
+      editor_host="${application_name}-${platform_environment}.apps.live.cloud-platform.service.justice.gov.uk"
+      helm_command="helm template deploy-eks/${chartname} $helm_command --set circleSha1=${build_SHA} \
+      --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
+      --set app_name=${application_name} --set editor_host=${editor_host}"
+    else
+      # disable_branching environment variable is not there so it is a standard deploy
+      helm_command="helm template deploy-eks/${chartname} $helm_command --set circleSha1=${build_SHA} \
+      --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
+      --set app_name=${application_name}"
+    fi
+  else
+    # disable_branching is only used by the editor app
+    app_name=fb-editor-test-no-branching
+    editor_host="${app_name}.apps.live.cloud-platform.service.justice.gov.uk"
+    echo "Deploying the no branching test editor. Setting editor_host to ${editor_host}"
+
+    # set the app_name to be the name of the no branching editor
+    echo "Setting app_name to ${app_name}"
+
+    helm_command="helm template deploy-eks/${chartname} $helm_command --set circleSha1=${build_SHA} \
+    --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
+    --set editor_host=${editor_host} --set app_name=${app_name} --set disable_branching=true"
+  fi
 fi
 echo "*******************************************************************"
 echo
