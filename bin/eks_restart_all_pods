@@ -23,7 +23,7 @@ k8s_environment_name=$(echo ${environment_full_name} | tr '-' '_' | tr [a-z] [A-
 k8s_token_env_var_name="EKS_TOKEN_${k8s_environment_name}"
 k8s_token=$(eval "echo \${$k8s_token_env_var_name}" | base64 -d)
 
-set_context "${credential_name}" "${namespace}" ${k8s_token} "${EKS_CLUSTER_CERT}" "${EKS_CLUSTER_NAME}"
+set_context "${credential_name}" "${k8a_namespace}" ${k8s_token} "${EKS_CLUSTER_CERT}" "${EKS_CLUSTER_NAME}"
 
 to_deploy=()
 deployments=$(kubectl get deployments -n ${k8s_namespace} | awk {'print $1'})
