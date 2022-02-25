@@ -15,9 +15,9 @@ In order to interact with the MoJ Cloud Platform there are certain environment v
 - GOOGLE_CLIENT_ID
 - GOOGLE_CLIENT_SECRET
 - GOOGLE_REFRESH_TOKEN
-- K8S_CLUSTER_CERT
-- K8S_CLUSTER_NAME
-- K8S_TOKEN
+- EKS_CLUSTER_CERT
+- EKS_CLUSTER_NAME
+- EKS_TOKEN
 - SSH_FILE_FOR_SECRETS
 - SLACK_WEBHOOK
 - SMOKE_TEST_USER
@@ -27,20 +27,20 @@ Depending on the app you will also need some environment specific K8S tokens. Wh
 
 For the platform apps and the Runner:
 
-- K8S_TOKEN_TEST_DEV
-- K8S_TOKEN_TEST_PRODUCTION
-- K8S_TOKEN_LIVE_DEV
-- K8S_TOKEN_LIVE_PRODUCTION
+- EKS_TOKEN_TEST_DEV
+- EKS_TOKEN_TEST_PRODUCTION
+- EKS_TOKEN_LIVE_DEV
+- EKS_TOKEN_LIVE_PRODUCTION
 
 For Publisher:
 
-- K8S_TOKEN_TEST
-- K8S_TOKEN_LIVE
+- EKS_TOKEN_TEST
+- EKS_TOKEN_LIVE
 
 For the HMCTS Complaints Adapter:
 
-- K8S_TOKEN_STAGING
-- K8S_TOKEN_PRODUCTION
+- EKS_TOKEN_STAGING
+- EKS_TOKEN_PRODUCTION
 
 These can be obtained by having the necessary permissions to [interact with Cloud Platform](https://user-guide.cloud-platform.service.justice.gov.uk/documentation/getting-started/kubectl-config.html#how-to-use-kubectl-to-connect-to-the-cluster).
 
@@ -48,7 +48,7 @@ These can be obtained by having the necessary permissions to [interact with Clou
 
 Once you have the required kube config on your machine you can run:
 
-`./bin/get_environment_variables <app_name>`
+`./bin/pipeline_variables <app_name>`
 
 `app_name` can be one of:
 
@@ -72,7 +72,7 @@ In addition to the above, you will also need to set the following configuration 
 - APPLICATION_NAME
 - PLATFORM_ENV
 - DEPLOYMENT_ENV
-- K8S_NAMESPACE
+- EKS_NAMESPACE or K8S_NAMESPACE (whichever is used in the pipeline config.yaml)
 
 `APPLICATION_NAME` is from the same list as `app_name` above.
 
@@ -80,6 +80,6 @@ In addition to the above, you will also need to set the following configuration 
 
 `DEPLOYMENT_ENV` is either `dev` or `production`.
 
-You can run the following command to find the correct `K8S_NAMESPACE` that you require for the app you are deploying:
+You can run the following command to find the correct `EKS_NAMESPACE` that you require for the app you are deploying:
 
 `kubectl get namespaces | grep formbuilder`
