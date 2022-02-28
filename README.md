@@ -54,7 +54,9 @@ Once you have the required kube config on your machine you can run:
 
 - fb-av
 - fb-base-adapter
+- fb-editor
 - fb-pdf-generator
+- fb-metadata-api
 - fb-publisher
 - fb-runner-node
 - fb-service-token-cache
