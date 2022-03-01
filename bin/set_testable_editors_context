@@ -4,29 +4,8 @@ set -e -u -o pipefail
 source "$(dirname "$0")/set_k8s_context"
 
 k8s_namespace=formbuilder-saas-test
-
-if env | grep -q ^EKS_SAAS_TOKEN=; then
-  echo "EKS_SAAS_TOKEN found. Using EKS_SAAS_TOKEN env var as a token."
-  k8s_token=$(echo $EKS_SAAS_TOKEN | base64 -d)
-else
-  echo "EKS_TOKEN not found. Using K8S_TOKEN env var as a token."
-  k8s_token=$(echo $K8S_SAAS_TOKEN | base64 -d)
-fi
-
-if env | grep -q ^EKS_CLUSTER_CERT=; then
-  echo "EKS_CLUSTER_CERT found. Using EKS_CLUSTER_CERT env var."
-  cluster_cert=$EKS_CLUSTER_CERT
-else
-  echo "EKS_CLUSTER_CERT not found. Using K8S_CLUSTER_CERT env var."
-  cluster_cert=$K8S_CLUSTER_CERT
-fi
-
-if env | grep -q ^EKS_CLUSTER_NAME=; then
-  echo "EKS_CLUSTER_NAME found. Using EKS_CLUSTER_NAME env var."
-  cluster_name=$EKS_CLUSTER_NAME
-else
-  echo "EKS_CLUSTER_NAME not found. Using K8S_CLUSTER_NAME env var."
-  cluster_name=$K8S_CLUSTER_NAME
-fi
+k8s_token=$(echo $EKS_TOKEN_TEST | base64 -d)
+cluster_cert=$EKS_CLUSTER_CERT
+cluster_name=$EKS_CLUSTER_NAME
 
 set_context "circleci" "${k8s_namespace}" "${k8s_token}" "${cluster_cert}" "${cluster_name}"
