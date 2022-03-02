@@ -51,7 +51,7 @@ for formbuilder_namespace in ${formbuilder_namespaces}; do
   fi
 done
 
-if [[ $app_name == 'fb-runner-node' ]]; then
+if [[ $app_name == 'fb-runner-node' ]] || [[ $app_name == 'fb-runner' ]]; then
   namespaces=('test-dev' 'test-production' 'live-dev' 'live-production')
   echo
   echo "==========================================="
@@ -128,6 +128,41 @@ else
         formatted_namespace=$(echo ${own_namespace##*-} | tr [a-z] [A-Z])
         echo
         echo "EKS_TOKEN_${formatted_namespace}=${k8s_namespace_token}"
+      fi
+    done
+  done
+fi
+
+if [[ $app_name == 'fb-service-token-cache' ]] || [[ $app_name == 'fb-editor' ]] || [[ $app_name == 'fb-publisher' ]]; then
+  echo
+  echo "==========================================="
+  echo "| EKS_BEARER_TOKEN for all environments |"
+  echo "==========================================="
+  echo
+
+  if [[ $app_name == 'fb-service-token-cache' ]]; then
+    namespaces=('test-dev' 'test-production' 'live-dev' 'live-production')
+  else
+    namespaces=('test' 'live')
+  fi
+
+  if [[ $app_name == 'fb-service-token-cache' ]]; then
+    namespace_type=platform
+  elif [[ $app_name == 'fb-publisher' ]]; then
+    namespace_type=publisher
+  else
+    namespace_type=saas
+  fi
+
+  for namespace in ${namespaces[@]}; do
+    secrets=$(kubectl get secrets -n formbuilder-${namespace_type}-${namespace})
+
+    updated_app_name=$(echo "${app_name/fb/formbuilder}")
+    for secret in ${secrets[@]}; do
+      if [[ $secret == *"${updated_app_name}"* ]] && [[ $secret == *"${namespace}-token"* ]]; then
+        formatted_namespace=$(echo ${namespace} | tr '-' '_' | tr [a-z] [A-Z])
+        echo
+        echo "EKS_BEARER_TOKEN_${formatted_namespace}=${secret}"
       fi
     done
   done
