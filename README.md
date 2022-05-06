@@ -22,6 +22,8 @@ In order to interact with the MoJ Cloud Platform there are certain environment v
 - SLACK_WEBHOOK
 - SMOKE_TEST_USER
 - SMOKE_TEST_PASSWORD
+- NEW_RUNNER_ACCEPTANCE_TEST_USER
+- NEW_RUNNER_ACCEPTANCE_TEST_PASSWORD
 
 Depending on the app you will also need some environment specific K8S tokens. Which ones will vary per app.
 

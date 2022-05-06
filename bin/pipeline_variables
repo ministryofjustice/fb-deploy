@@ -200,3 +200,10 @@ echo "SMOKE_TEST_USER=${smoke_test_user}"
 echo "SMOKE_TEST_PASSWORD=${smoke_test_password}"
 echo
 echo
+
+new_runner_acceptance_test_user=$(kubectl get secrets -n formbuilder-repos new-runner-app -o jsonpath={.data.new_runner_acceptance_test_user} | base64 -D)
+new_runner_acceptance_test_password=$(kubectl get secrets -n formbuilder-repos new-runner-app -o jsonpath={.data.new_runner_acceptance_test_password} | base64 -D)
+echo "NEW_RUNNER_ACCEPTANCE_TEST_USER=${new_runner_acceptance_test_user}"
+echo "NEW_RUNNER_ACCEPTANCE_TEST_PASSWORD=${new_runner_acceptance_test_password}"
+echo
+echo
