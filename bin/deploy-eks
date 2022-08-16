@@ -188,6 +188,18 @@ if [[ $application_name == 'fb-service-token-cache' ]]; then
   helm_command="${helm_command} --set bearer_token=${bearer_token}"
 fi
 
+  # The fb-av app is deployed in two namespaces, the platform and saas.
+  # So different apps need to access the fb-av app depending on which
+  # namespace fb-av is deployed into. The user filestore requires access
+  # in the platform namespace. The editor requires access in the saas namespace.
+if [[ $application_name == 'fb-av' ]]; then
+  if [ -z "$deployment_environment" ]; then
+    helm_command="${helm_command} --set accessing_app=fb-editor-web-${environment_full_name}"
+  else
+    helm_command="${helm_command} --set accessing_app=fb-user-filestore-api-${environment_full_name}"
+  fi
+fi
+
 echo "*******************************************************************"
 echo "Full helm command"
 echo $helm_command
