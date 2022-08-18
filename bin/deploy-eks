@@ -150,11 +150,7 @@ else
 
   helm_command="helm template deploy-eks/${chartname} $helm_command --set circleSha1=${build_SHA} \
   --set environmentName=${environment_full_name} --set platformEnv=${platform_environment} \
-  --set app_name=${application_name} --set namespace=${namespace}"
-
-  echo "*******************************************************************"
-  echo "Helm command is ${helm_command}"
-  echo "*******************************************************************"
+  --set app_name=${application_name}"
 
   if [[ $platform_environment == 'test' ]] && [[ $application_name == 'fb-editor' ]]; then
     editor_host="${application_name}-${platform_environment}.apps.live.cloud-platform.service.justice.gov.uk"
@@ -186,18 +182,6 @@ if [[ $application_name == 'fb-service-token-cache' ]]; then
   bearer_token_env_var_name=$(echo $bearer_token_env_var_name | tr [a-z] [A-Z])
   bearer_token=$(eval "echo \${$bearer_token_env_var_name}")
   helm_command="${helm_command} --set bearer_token=${bearer_token}"
-fi
-
-  # The fb-av app is deployed in two namespaces, the platform and saas.
-  # So different apps need to access the fb-av app depending on which
-  # namespace fb-av is deployed into. The user filestore requires access
-  # in the platform namespace. The editor requires access in the saas namespace.
-if [[ $application_name == 'fb-av' ]]; then
-  if [ -z "$deployment_environment" ]; then
-    helm_command="${helm_command} --set accessing_app=fb-editor-web-${environment_full_name}"
-  else
-    helm_command="${helm_command} --set accessing_app=fb-user-filestore-api-${environment_full_name}"
-  fi
 fi
 
 echo "*******************************************************************"
