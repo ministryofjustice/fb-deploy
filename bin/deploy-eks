@@ -53,11 +53,11 @@ echo "namespace is ${namespace}"
 echo "*******************************************************************"
 echo
 
-if [ -n "$SSH_FILE_FOR_SECRETS" ]; then
+if [ -n "${SSH_FILE_FOR_SECRETS-}" ]; then
   ssh_file_for_secrets=$SSH_FILE_FOR_SECRETS
 fi
 
-if [ -n "$ENCODED_GIT_CRYPT_KEY" ]; then
+if [ -n "${ENCODED_GIT_CRYPT_KEY-}" ]; then
   encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
 fi
 
