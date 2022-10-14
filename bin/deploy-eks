@@ -93,7 +93,7 @@ echo
 ################################################################
 
 if [[ ! -d app-secrets ]]; then
-  if [ -z "$ssh_file_for_secrets" ] || [ -z "$encoded_git_crypt_key" ]; then
+  if [ -z "${ssh_file_for_secrets-}" ] || [ -z "${encoded_git_crypt_key-}" ]; then
     echo "*******************************************************************"
     echo "No SSH file for secrets or encoded git crypt key found. Skipping app secrets"
     echo "*******************************************************************"
