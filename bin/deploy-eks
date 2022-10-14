@@ -53,8 +53,13 @@ echo "namespace is ${namespace}"
 echo "*******************************************************************"
 echo
 
-ssh_file_for_secrets=$SSH_FILE_FOR_SECRETS
-encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
+if [ -n "$SSH_FILE_FOR_SECRETS" ]; then
+  ssh_file_for_secrets=$SSH_FILE_FOR_SECRETS
+fi
+
+if [ -n "$ENCODED_GIT_CRYPT_KEY" ]; then
+  encoded_git_crypt_key=$ENCODED_GIT_CRYPT_KEY
+fi
 
 credential_name="circleci_$(echo ${environment_full_name} | tr '-' '_')"
 
@@ -88,10 +93,17 @@ echo
 ################################################################
 
 if [[ ! -d app-secrets ]]; then
-  GIT_SSH_COMMAND="ssh -v -i ${ssh_file_for_secrets} -o \"IdentitiesOnly=yes\"" git clone git@github.com:ministryofjustice/${application_name}-deploy.git app-secrets
-  echo ${encoded_git_crypt_key} | base64 -d > app-secrets/git_crypt.key
-  cd app-secrets && git-crypt unlock git_crypt.key && cd ..
-  pwd
+  if [ -z "$ssh_file_for_secrets" ] || [ -z "$encoded_git_crypt_key" ]; then
+    echo "*******************************************************************"
+    echo "No SSH file for secrets or encoded git crypt key found. Skipping app secrets"
+    echo "*******************************************************************"
+    echo
+  else
+    GIT_SSH_COMMAND="ssh -v -i ${ssh_file_for_secrets} -o \"IdentitiesOnly=yes\"" git clone git@github.com:ministryofjustice/${application_name}-deploy.git app-secrets
+    echo ${encoded_git_crypt_key} | base64 -d > app-secrets/git_crypt.key
+    cd app-secrets && git-crypt unlock git_crypt.key && cd ..
+    pwd
+  fi
 fi
 
 values_config="app-secrets/values/${environment_full_name}-values.yaml"
