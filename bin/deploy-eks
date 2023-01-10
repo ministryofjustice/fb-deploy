@@ -88,7 +88,7 @@ echo
 ################################################################
 
 if [[ ! -d app-secrets ]]; then
-  GIT_SSH_COMMAND="ssh -v -i ${ssh_file_for_secrets} -o \"IdentitiesOnly=yes\"" git clone git@github.com:ministryofjustice/${application_name}-deploy.git app-secrets
+  GIT_SSH_COMMAND="ssh -v -i ${ssh_file_for_secrets} -o \"IdentitiesOnly=yes\"" git clone -b temp-git-crypt-branch git@github.com:ministryofjustice/${application_name}-deploy.git app-secrets
   echo ${encoded_git_crypt_key} | base64 -d > app-secrets/git_crypt.key
   cd app-secrets && git-crypt unlock git_crypt.key && cd ..
   pwd
