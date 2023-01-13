@@ -161,7 +161,7 @@ for ecr_credential in ${ecr_credentials[@]}; do
     # located in docker/worker/Dockerfile
     #
     top_level=false
-    for str in "${top_level_docker_files[@]}"; do
+    for str in ${top_level_docker_files[@]}; do
       if [[ $ecr_credentials_secret == "$str" ]]; then
         top_level=true
       fi
