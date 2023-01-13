@@ -163,11 +163,14 @@ for ecr_credential in ${ecr_credentials[@]}; do
     top_level=false
     for str in ${top_level_docker_files[@]}; do
       if [[ $ecr_credentials_secret == $str ]]; then
+        echo "*******************************************************************"
+        echo "Matched to top level dockerfile, will always resolve to ./Dockerfile"
+        echo "*******************************************************************"
         top_level=true
       fi
     done
 
-    if [[ $application_type == $ecr_credentials_secret ]] || [[ $top_level ]]; then
+    if [[ $application_type == $ecr_credentials_secret ]] || [[ $top_level == true ]]; then
       dockerfile="./Dockerfile"
     else
       dockerfile="./docker/${application_type}/Dockerfile"
