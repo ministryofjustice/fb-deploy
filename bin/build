@@ -163,6 +163,9 @@ for ecr_credential in ${ecr_credentials[@]}; do
     top_level=false
     for str in ${top_level_docker_files[@]}; do
       if [[ $ecr_credentials_secret == $str ]]; then
+        echo "*******************************************************************"
+        echo "Matched to top level dockerfile, will always resolve to ./Dockerfile"
+        echo "*******************************************************************"
         top_level=true
       fi
     done
