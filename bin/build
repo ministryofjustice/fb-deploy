@@ -136,6 +136,8 @@ ecr_credentials=$(kubectl get secrets -n formbuilder-repos)
 echo "*******************************************************************"
 echo
 
+top_level_docker_files=("ecr-repo-fb-user-datastore-api" "ecr-repo-fb-user-filestore-api")
+
 for ecr_credential in ${ecr_credentials[@]}; do
   if [[ ${ecr_credential} == *"${ecr_credentials_secret}"* ]]; then
     # Despite this saying it is a secret and/or credential, this is in fact just
@@ -158,7 +160,14 @@ for ecr_credential in ${ecr_credentials[@]}; do
     # ecr-repo-fb-submitter-api) the dockerfile to be build will be
     # located in docker/worker/Dockerfile
     #
-    if [[ $application_type == $ecr_credentials_secret ]]; then
+    top_level=false
+    for str in "${top_level_docker_files[@]}"; do
+      if [[ $ecr_credentials_secret == "$str" ]]; then
+        top_level=true
+      fi
+    done
+
+    if [[ $application_type == "$ecr_credentials_secret" ]] || [[ $top_level ]]; then
       dockerfile="./Dockerfile"
     else
       dockerfile="./docker/${application_type}/Dockerfile"
