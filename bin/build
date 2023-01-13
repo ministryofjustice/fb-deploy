@@ -167,7 +167,7 @@ for ecr_credential in ${ecr_credentials[@]}; do
       fi
     done
 
-    if [[ $application_type == "$ecr_credentials_secret" ]] || [[ $top_level ]]; then
+    if [[ $application_type == $ecr_credentials_secret ]] || [[ $top_level ]]; then
       dockerfile="./Dockerfile"
     else
       dockerfile="./docker/${application_type}/Dockerfile"
