@@ -2,7 +2,8 @@
 set -e -u -o pipefail
 
 echo 'Cloning acceptance tests'
-git clone https://github.com/ministryofjustice/fb-acceptance-tests
+# git clone https://github.com/ministryofjustice/fb-acceptance-tests
+git clone --single-branch --branch remove-submission-id https://github.com/ministryofjustice/fb-acceptance-tests
 
 cd fb-acceptance-tests
 
