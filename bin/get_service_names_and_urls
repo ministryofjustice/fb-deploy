@@ -1,0 +1,65 @@
+#!/usr/bin/env sh
+set -e -u -o pipefail
+
+namespace=$1
+fb_runner_image_url=$(kubectl get secrets -n formbuilder-repos ecr-repo-fb-runner -o json | jq -r '.data["repo_url"]' | base64 -D)
+fb_runner_node_image_url=$(kubectl get secrets -n formbuilder-repos ecr-repo-fb-runner-node -o json | jq -r '.data["repo_url"]' | base64 -D)
+maintenance_page_image_url=$(kubectl get secrets -n formbuilder-repos ecr-repo-fb-maintenance-page -o json | jq -r '.data["repo_url"]' | base64 -D)
+test_dev='test-dev'
+test_production='test-production'
+live_dev='live-dev'
+live_production='live-production'
+
+if [ $namespace != $test_dev ] && [ $namespace != $test_production ] && [ $namespace != $live_dev ] && [ $namespace != $live_production ] ; then
+  echo 'Please enter namespace test-dev or test-production'
+  exit 1;
+fi
+service_names="$(kubectl get deployments -n formbuilder-services-${namespace}  --output=jsonpath={.items..metadata.name})"
+
+get_service_name_and_url () {
+  for service in ${service_names}; do
+    list_image=$(kubectl get deployments -n formbuilder-services-$1 ${service} -o=jsonpath='{$.spec.template.spec.containers[:1].image}')
+
+    if [[ "$list_image" == *"${fb_runner_node_image_url}:latest-$3"* ]]; then
+      echo "============================================================="
+      echo "Service: ${service}"
+      echo "Platform: LEGACY"
+      echo "URL: https://${service}.$2"
+      echo "============================================================="
+    fi
+
+    if [[ "$list_image" == *"${maintenance_page_image_url}:latest"* ]]; then
+      echo "========================================="
+      echo "Service: ${service} is maintenance page"
+      echo "========================================="
+    fi
+
+    if [[ "$list_image" == *"${fb_runner_image_url}:latest-$3"* ]]; then
+      echo "============================================================="
+      echo "Service: ${service}"
+      echo "Platform: MoJ Forms"
+      echo "URL: https://${service}.$2"
+      echo "============================================================="
+    fi
+  done
+}
+
+echo "=========================================================="
+echo "| Getting services for formbuilder-services-${namespace} |"
+echo "=========================================================="
+
+if [[ "$namespace" == "$test_dev" ]]; then
+  get_service_name_and_url ${namespace} "dev.test.form.service.justice.gov.uk/" "test"
+fi
+
+if [[ "$namespace" == *"$test_production"* ]]; then
+  get_service_name_and_url ${namespace} "test.form.service.justice.gov.uk/" "test"
+fi
+
+if [[ "$namespace" == *"$live_dev"* ]]; then
+  get_service_name_and_url ${namespace} "dev.form.service.justice.gov.uk/" "live"
+fi
+
+if [[ "$namespace" == *"$live_production"* ]]; then
+  get_service_name_and_url ${namespace} "form.service.justice.gov.uk/" "live"
+fi
