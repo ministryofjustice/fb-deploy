@@ -87,3 +87,12 @@ In addition to the above, you will also need to set the following configuration 
 You can run the following command to find the correct `EKS_NAMESPACE` that you require for the app you are deploying:
 
 `kubectl get namespaces | grep formbuilder`
+
+## Getting the existing service names and urls in a namespace
+
+To check what services are currently running in Kubernetes pods we can run the `get_service_names_and_urls` script.
+
+To run:
+`./bin/get_service_names_and_urls <namespace>`
+
+This script will print out the service name, the platform it is running on (Legacy or MoJ Forms) and the URL for the service.
