@@ -25,13 +25,17 @@ get_service_name_and_url () {
       echo "Service: ${service}"
       echo "Platform: LEGACY"
       echo "URL: https://${service}.$2"
+      echo "Adding ${service} to csv file"
+      echo "${service},LEGACY,https://${service}.$2" | tee -a export-services-$namespace.csv
       echo "============================================================="
     fi
 
     if [[ "$list_image" == *"${maintenance_page_image_url}:latest"* ]]; then
-      echo "========================================="
+      echo "============================================================="
       echo "Service: ${service} is maintenance page"
-      echo "========================================="
+      echo "Adding ${service} to csv file"
+      echo "${service},Maintenance,https://${service}.$2" | tee -a export-services-$namespace.csv
+      echo "============================================================="
     fi
 
     if [[ "$list_image" == *"${fb_runner_image_url}:latest-$3"* ]]; then
@@ -39,6 +43,8 @@ get_service_name_and_url () {
       echo "Service: ${service}"
       echo "Platform: MoJ Forms"
       echo "URL: https://${service}.$2"
+      echo "Adding ${service} to csv file"
+      echo "${service},MOJ Forms,https://${service}.$2" | tee -a export-services-$namespace.csv
       echo "============================================================="
     fi
   done
