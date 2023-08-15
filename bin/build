@@ -127,8 +127,6 @@ echo "*******************************************************************"
 echo "Getting ECR credentials"
 ecr_username=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_username}" | base64 -d)
 ecr_password=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_password}" | base64 -d)
-
-
 echo "*******************************************************************"
 echo
 
@@ -192,55 +190,28 @@ for ecr_credential in ${ecr_credentials[@]}; do
         echo "*******************************************************************"
         echo
 
-        echo "*******************************************************************"
-        echo "Getting secrets from AWS"
+        # echo "*******************************************************************"
+        # echo "Getting secrets from AWS"
+        # export AWS_DEFAULT_REGION=eu-west-2
+        # export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
+        # export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
+        # export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
 
-        echo "*******************************************************************"
-        echo "Assume role and identity"
+        # if [[ -z $AWS_ACCESS_KEY_ID ]] || [[ -z $AWS_SECRET_ACCESS_KEY ]] || [[ -z $ECR_REPO_URL ]]; then
+        #   echo "AWS Credentials were not set correctly"
+        #   exit 1
+        # fi
 
-        aws sts assume-role \
-        --role-arn "${ECR_ROLE_TO_ASSUME}" \
-        --role-session-name "fb-deploy-ecr-session" \
-        --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-        --output text
-        
+        # echo "*******************************************************************"
+        # echo
 
-        if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ] || [ -z "${AWS_SESSION_TOKEN}" ]; then
-            echo "Failed to assume role";
-            exit 1
-        else 
-            {
-                echo "export AWS_ACCESS_KEY_ID=\"${AWS_ACCESS_KEY_ID}\""
-                echo "export AWS_SECRET_ACCESS_KEY=\"${AWS_SECRET_ACCESS_KEY}\""
-                echo "export AWS_SESSION_TOKEN=\"${AWS_SESSION_TOKEN}\""
-            } >>"$BASH_ENV"
-            echo "Assume role with web identity succeeded"
-        fi
-        echo "*******************************************************************"
+        # echo "*******************************************************************"
+        # echo 'Logging into AWS ECR'
+        # aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
+        # echo "*******************************************************************"
+        # echo
 
-
-
-        export AWS_DEFAULT_REGION=eu-west-2
-        export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
-        export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
-        export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
-
-
-        if [[ -z $AWS_ACCESS_KEY_ID ]] || [[ -z $AWS_SECRET_ACCESS_KEY ]] || [[ -z $ECR_REPO_URL ]]; then
-          echo "AWS Credentials were not set correctly"
-          exit 1
-        fi
-
-        echo "*******************************************************************"
-        echo
-
-        echo "*******************************************************************"
-        echo 'Logging into AWS ECR'
-        aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
-        echo "*******************************************************************"
-        echo
-
-        build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
+        build_and_push ${ECR_REPOSITORY} ${environment_name} ${build_SHA}  ${dockerfile}
       fi
     else
       echo "*******************************************************************"
