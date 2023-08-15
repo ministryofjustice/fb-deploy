@@ -200,6 +200,7 @@ for ecr_credential in ${ecr_credentials[@]}; do
 
         aws sts assume-role \
         --role-arn "${ECR_ROLE_TO_ASSUME}" \
+        --role-session-name "fb-deploy-ecr-session" \
         --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
         --output text
         
