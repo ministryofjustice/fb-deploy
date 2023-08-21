@@ -207,7 +207,9 @@ for ecr_credential in ${ecr_credentials[@]}; do
 
         echo "*******************************************************************"
         echo 'Logging into AWS ECR'
-        aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
+        # aws ecr get-login-password --region eu-west-2 | docker login --username ${ecr_username} --password-stdin ${ecr_password}
+        aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin ${AWS_ECR_REGISTRY_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com
+
         export ECR_REPO_URL=${AWS_ECR_REGISTRY_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${ECR_REPOSITORY}
 
         build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
