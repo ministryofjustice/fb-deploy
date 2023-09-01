@@ -212,7 +212,7 @@ for ecr_credential in ${ecr_credentials[@]}; do
 
         export ECR_REPO_URL=${AWS_ECR_REGISTRY_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${ECR_REPOSITORY}
 
-        if [[ ${ecr_credential} == 'ecr-repo-fb-submitter-workers']]; then
+        if [[ $ecr_credential == 'ecr-repo-fb-submitter-workers' ]]; then
           export ECR_REPO_URL=${AWS_ECR_REGISTRY_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${WORKERS_ECR_REPOSITORY}
         fi
 
