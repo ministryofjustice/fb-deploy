@@ -218,8 +218,6 @@ for ecr_credential in ${ecr_credentials[@]}; do
           echo "*******************************************************************"
           export ECR_REPO_URL=${AWS_ECR_REGISTRY_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${WORKERS_ECR_REPOSITORY}
           build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
-        else
-          # do nothing
         fi
         if [[ $ecr_credential != 'ecr-repo-fb-submitter-workers' ]]; then
           build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
