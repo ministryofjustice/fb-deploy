@@ -123,13 +123,6 @@ echo
 
 set_context "circleci" "${k8s_namespace}" "${k8s_token}" "${cluster_cert}" "${cluster_name}"
 
-# echo "*******************************************************************"
-# echo "Getting ECR credentials"
-# ecr_username=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_username}" | base64 -d)
-# ecr_password=$(kubectl get secrets -n formbuilder-repos ecr-credentials -o jsonpath="{.data.ecr_password}" | base64 -d)
-# echo "*******************************************************************"
-# echo
-
 echo "*******************************************************************"
 echo "Finding right ecr repos from ${k8s_namespace}"
 ecr_credentials=$(kubectl get secrets -n formbuilder-repos)
