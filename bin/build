@@ -60,7 +60,7 @@ build_and_push() {
     # The other apps make use of the build SHA as the tag
     echo "*******************************************************************"
     echo "Runner app. Building ${repo_name}:latest-$2"
-    docker build --no-cache -t "$1:latest-$2" -f "$4" .
+    docker build -t "$1:latest-$2" -f "$4" .
     echo "*******************************************************************"
     echo
 
