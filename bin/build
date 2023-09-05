@@ -189,22 +189,8 @@ for ecr_credential in ${ecr_credentials[@]}; do
         echo "Using Dockerfile from ${dockerfile}"
         echo "*******************************************************************"
         echo
-
-        # echo "*******************************************************************"
-        # echo "Getting secrets from AWS"
         export AWS_DEFAULT_REGION=$ECR_REGION
-        # export AWS_ACCESS_KEY_ID=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.access_key_id}' | base64 -d)
-        # export AWS_SECRET_ACCESS_KEY=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.secret_access_key}' | base64 -d)
-        # export ECR_REPO_URL=$(kubectl get secrets -n formbuilder-repos ${ecr_credential} -o jsonpath='{.data.repo_url}' | base64 -d)
-
-        # if [[ -z $AWS_ACCESS_KEY_ID ]] || [[ -z $AWS_SECRET_ACCESS_KEY ]] || [[ -z $ECR_REPO_URL ]]; then
-        #   echo "AWS Credentials were not set correctly"
-        #   exit 1
-        # fi
-
-        # echo "*******************************************************************"
-        # echo
-
+        # We used to use long lived creds for this login, we now login in the circle jobs using an orb and output the ~/.aws/config data to $BASH_ENV
         echo "*******************************************************************"
         echo 'Logging into AWS ECR'
         aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin ${AWS_ECR_REGISTRY_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com
