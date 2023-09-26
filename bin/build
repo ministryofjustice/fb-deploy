@@ -196,14 +196,6 @@ for ecr_credential in ${ecr_credentials[@]}; do
         # This login is done in a separate step in the circle pipeline so had to split build steps into build-api and build-worker
         # We still have the list of secrets in formbuilder-repos for this script to work, but they no longer contain long-lived access keys, they're essentially just a list of our
         # available repositories
-        if [[ $ecr_credential == 'ecr-repo-fb-editor-workers' ]] && [[ $BUILD_WORKER == 'true' ]]; then
-          echo "*******************************************************************"
-          echo "Building editor worker"
-          echo "*******************************************************************"
-          export ECR_REPO_URL=${AWS_ECR_REGISTRY_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com/${WORKERS_ECR_REPOSITORY}
-          build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
-        fi
-
         if [[ $ecr_credential == 'ecr-repo-fb-submitter-workers' ]] && [[ $BUILD_WORKER == 'true' ]]; then
           echo "*******************************************************************"
           echo "Building submitter worker"
@@ -228,7 +220,7 @@ for ecr_credential in ${ecr_credentials[@]}; do
           build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
         fi
 
-        if [[ $ecr_credential != 'ecr-repo-fb-editor-workers' ]] && [[ $ecr_credential != 'ecr-repo-fb-submitter-workers' ]] && [[ $ecr_credential != 'ecr-repo-hmcts-complaints-formbuilder-adapter-worker' ]] && [[ $ecr_credential != 'ecr-repo-fb-publisher-worker' ]] && [[ $BUILD_WORKER != 'true' ]]; then
+        if [[ $ecr_credential != 'ecr-repo-fb-submitter-workers' ]] && [[ $ecr_credential != 'ecr-repo-hmcts-complaints-formbuilder-adapter-worker' ]] && [[ $ecr_credential != 'ecr-repo-fb-publisher-worker' ]] && [[ $BUILD_WORKER != 'true' ]]; then
           build_and_push ${ECR_REPO_URL} ${environment_name} ${build_SHA}  ${dockerfile}
         fi
       fi
