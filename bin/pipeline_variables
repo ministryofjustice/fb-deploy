@@ -9,10 +9,15 @@ builder_image_secret_access_key=$(kubectl get secrets -n formbuilder-repos ecr-r
 
 ecr_repos=$(kubectl get secrets -n formbuilder-repos)
 
+CIRCLE_SERVICEACC=("circleci-formbuilder-repos-token" "circleci-tf-formbuilder-repos-token-20-03-2026" "circleci-tf-formbuilder-repos-token-27-03-2026 ")
+
 for repo in ${ecr_repos[@]}; do
-  if [[ $repo == *"circleci-formbuilder-repos-token"* ]]; then
-    circle_secret_name=$repo
-  fi
+  for circle_serviceacc in ${CIRCLE_SERVICEACC[@]}; do
+    if [[ $repo == *"$circle_serviceacc"* ]]; then
+      circle_secret_name=$repo
+      break
+    fi
+  done
 done
 
 cert=$(kubectl get secrets -n formbuilder-repos ${circle_secret_name} -o json |  jq -r '.data["ca.crt"]')
@@ -62,7 +67,7 @@ if [[ $app_name == 'fb-runner-node' ]] || [[ $app_name == 'fb-runner' ]]; then
     secrets=$(kubectl get secrets -n formbuilder-services-${namespace})
 
     for secret in ${secrets[@]}; do
-      if [[ $secret == *"circleci-formbuilder-services-${namespace}"* ]]; then
+      if [[ $secret == *"circleci-formbuilder-services-token"* ]]; then
         k8s_namespace_token=$(kubectl get secrets -n formbuilder-services-${namespace} ${secret} -o jsonpath="{.data.token}")
         formatted_namespace=$(echo ${namespace} | tr '-' '_' | tr [a-z] [A-Z])
         echo
@@ -81,9 +86,9 @@ elif [[ $app_name == 'fb-metadata-api' ]] || [[ $app_name == 'fb-editor' ]]; the
 
   for namespace in ${namespaces[@]}; do
     secrets=$(kubectl get secrets -n formbuilder-saas-${namespace})
-
+    
     for secret in ${secrets[@]}; do
-      if [[ $secret == *"circleci-formbuilder-saas-${namespace}"* ]]; then
+      if [[ $secret == *"circleci-terraform-module-formbuilder-saas-${namespace}"* ]]; then
         k8s_namespace_token=$(kubectl get secrets -n formbuilder-saas-${namespace} ${secret} -o jsonpath="{.data.token}")
         formatted_namespace=$(echo ${namespace} | tr [a-z] [A-Z])
         echo
@@ -99,12 +104,12 @@ elif [[ ${#own_namespaces[@]} -eq 0 ]]; then
   echo
 
   namespaces=('test-dev' 'test-production' 'live-dev' 'live-production')
-
+  
   for namespace in ${namespaces[@]}; do
     secrets=$(kubectl get secrets -n formbuilder-platform-${namespace})
 
     for secret in ${secrets[@]}; do
-      if [[ $secret == *"circleci-formbuilder-platform-${namespace}"* ]]; then
+      if [[ $secret == *"circleci-terraform-module-formbuilder-platform-${namespace}"* ]]; then
         k8s_namespace_token=$(kubectl get secrets -n formbuilder-platform-${namespace} ${secret} -o jsonpath="{.data.token}")
         formatted_namespace=$(echo ${namespace} | tr '-' '_' | tr [a-z] [A-Z])
         echo
@@ -121,7 +126,7 @@ else
 
   for own_namespace in ${own_namespaces[@]}; do
     secrets=$(kubectl get secrets -n ${own_namespace})
-
+    echo ">>> EKS_TOKEN all env (121): ${own_namespace}"
     for secret in ${secrets[@]}; do
       if [[ $secret == *"circleci"* ]]; then
         k8s_namespace_token=$(kubectl get secrets -n ${own_namespace} ${secret} -o jsonpath="{.data.token}")
